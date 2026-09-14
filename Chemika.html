@@ -84,8 +84,6 @@
         }
         .btn-gold:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4); }
 
-        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
-
         #userStatus {
             margin-top: 8px;
             font-size: 0.9rem;
@@ -588,7 +586,6 @@
                 <button class="btn btn-primary" id="showLoginBtn">🔓 Teken In</button>
                 <button class="btn btn-outline" id="showRegisterBtn">📝 Registreer</button>
                 <button class="btn btn-danger" id="logoutBtn" style="display:none;">🚪 Teken Uit</button>
-                <button class="btn btn-outline btn-sm" id="resetStatsBtn" style="display:none;">🗑️ Reset</button>
             </div>
             <div id="userStatus">
                 <div class="user-detail" id="userStatsDisplay" style="display:none;">
@@ -813,7 +810,7 @@
             constructor() {
                 this.currentUser = null;
                 this.users = this.loadAllUsers();
-                this.storageKey = 'chemieUsers_v3';
+                this.storageKey = 'chemieUsers_v4';
                 this.lastSaved = null;
             }
 
@@ -844,25 +841,37 @@
             }
 
             register(username, password, confirmPassword) {
-                const cleanUser = username.trim().toLowerCase();
-                if (this.users[cleanUser]) return { success: false, message: '❌ Gebruikersnaam bestaan reeds!' };
-                if (username.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
+                const trimmedUser = username.trim();
+                const cleanUser = trimmedUser.toLowerCase();
+                
+                // KYK OF GEBRUIKERSNAAM AL BESTAAN (case-insensitive)
+                if (this.users[cleanUser]) {
+                    return { 
+                        success: false, 
+                        message: `❌ Gebruikersnaam "${this.users[cleanUser].displayName}" bestaan reeds!` 
+                    };
+                }
+                
+                if (trimmedUser.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
                 if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
                 if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
+                // STOOR MET LOWERCASE SLEUTEL MAAR BEHOU OORSPRONKLIKE CASE
                 this.users[cleanUser] = {
+                    displayName: trimmedUser, // Behou oorspronklike case vir display
                     password: this.hashPassword(password),
                     stats: this.getDefaultStats(),
                     created: new Date().toISOString(),
                     lastLogin: new Date().toISOString(),
                 };
                 this.saveAllUsers();
-                return { success: true, message: '✅ Registrasie suksesvol! Teken nou in.' };
+                return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
             }
 
             login(username, password) {
                 const cleanUser = username.trim().toLowerCase();
                 const user = this.users[cleanUser];
+                
                 if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
                 if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
 
@@ -870,7 +879,9 @@
                 this.saveAllUsers();
                 this.currentUser = cleanUser;
                 sessionStorage.setItem('chemieUser', cleanUser);
-                return { success: true, message: `✅ Welkom terug, ${cleanUser}!` };
+                
+                const displayName = user.displayName || cleanUser;
+                return { success: true, message: `✅ Welkom terug, ${displayName}!` };
             }
 
             logout() {
@@ -882,6 +893,12 @@
             getUserStats() {
                 if (!this.currentUser) return null;
                 return this.users[this.currentUser]?.stats || null;
+            }
+
+            getDisplayName() {
+                if (!this.currentUser) return null;
+                const user = this.users[this.currentUser];
+                return user?.displayName || this.currentUser;
             }
 
             updateUserStats(newStats) {
@@ -916,19 +933,10 @@
                 return hash.toString(36);
             }
 
-            resetUserStats() {
-                if (!this.currentUser) return { success: false, message: '❌ Geen gebruiker ingeteken nie!' };
-                const user = this.users[this.currentUser];
-                if (!user) return { success: false, message: '❌ Gebruiker bestaan nie!' };
-                user.stats = this.getDefaultStats();
-                this.saveAllUsers();
-                return { success: true, message: '✅ Statistieke is teruggestel!' };
-            }
-
             // LEADERBOARD FUNKSIE
             getLeaderboard(sortBy = 'bestHeight', limit = 50) {
                 const entries = Object.entries(this.users).map(([username, data]) => ({
-                    username,
+                    username: data.displayName || username, // Gebruik display name
                     stats: data.stats || this.getDefaultStats(),
                     lastLogin: data.lastLogin,
                 }));
@@ -988,17 +996,10 @@
                 return;
             }
 
-            const sortLabels = {
-                bestHeight: '🏔️ Hoogte',
-                totalCorrect: '✅ Korrek',
-                bestStreak: '🔥 Reeks',
-                gamesPlayed: '🎮 Speletjies'
-            };
-
             let html = '';
             leaderboard.forEach((entry, index) => {
                 const rank = index + 1;
-                const isCurrentUser = userSystem.currentUser === entry.username;
+                const isCurrentUser = userSystem.currentUser === entry.username.toLowerCase();
                 const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
                 
@@ -1025,17 +1026,16 @@
             const showLoginBtn = document.getElementById('showLoginBtn');
             const showRegisterBtn = document.getElementById('showRegisterBtn');
             const logoutBtn = document.getElementById('logoutBtn');
-            const resetStatsBtn = document.getElementById('resetStatsBtn');
             const userStatsDisplay = document.getElementById('userStatsDisplay');
             const app = document.getElementById('app');
 
             if (userSystem.currentUser) {
                 const stats = userSystem.getUserStats();
-                currentUserDisplay.innerHTML = `👤 <strong style="color:#60a5fa;">${userSystem.currentUser}</strong>`;
+                const displayName = userSystem.getDisplayName();
+                currentUserDisplay.innerHTML = `👤 <strong style="color:#60a5fa;">${displayName}</strong>`;
                 showLoginBtn.style.display = 'none';
                 showRegisterBtn.style.display = 'none';
                 logoutBtn.style.display = 'inline-block';
-                resetStatsBtn.style.display = 'inline-block';
                 userStatsDisplay.style.display = 'flex';
                 app.classList.remove('disabled');
 
@@ -1048,7 +1048,6 @@
                 showLoginBtn.style.display = 'inline-block';
                 showRegisterBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
-                resetStatsBtn.style.display = 'none';
                 userStatsDisplay.style.display = 'none';
                 app.classList.add('disabled');
             }
@@ -1120,11 +1119,15 @@
             if (result.success) {
                 clearError('registerError');
                 hideRegisterPopup();
-                document.getElementById('loginUsername').value = username;
-                document.getElementById('loginPassword').value = '';
-                setTimeout(showLoginPopup, 300);
-                feedbackMsg.className = 'feedback-msg info';
-                feedbackMsg.textContent = result.message + ' Teken nou in.';
+                // Auto-login na registrasie
+                const loginResult = userSystem.login(username, password);
+                if (loginResult.success) {
+                    updateUserUI();
+                    loadUserStatsIntoGame();
+                    if (typeof restartGame === 'function') restartGame();
+                    feedbackMsg.className = 'feedback-msg correct';
+                    feedbackMsg.textContent = loginResult.message;
+                }
             } else {
                 showError('registerError', result.message, 'registerBox');
             }
@@ -1155,18 +1158,6 @@
             if (typeof restartGame === 'function') restartGame();
             feedbackMsg.className = 'feedback-msg info';
             feedbackMsg.textContent = '👋 Jy is uitgeteken!';
-        });
-
-        document.getElementById('resetStatsBtn').addEventListener('click', () => {
-            if (confirm('⚠️ Wil jy AL jou statistieke uitvee? Dit kan nie ongedaan gemaak word nie!')) {
-                const result = userSystem.resetUserStats();
-                if (result.success) {
-                    updateUserUI();
-                    loadUserStatsIntoGame();
-                    feedbackMsg.className = 'feedback-msg info';
-                    feedbackMsg.textContent = result.message;
-                }
-            }
         });
 
         function loadUserStatsIntoGame() {
