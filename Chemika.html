@@ -64,39 +64,26 @@
             color: white;
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: scale(1.02);
-        }
+        .btn-primary:hover { background: #1d4ed8; transform: scale(1.02); }
+        .btn-primary:active { transform: scale(0.98); }
 
         .btn-outline {
             background: transparent;
             border: 1px solid #334155;
             color: #cbd5e1;
         }
-        .btn-outline:hover {
-            background: #1e293b;
-        }
+        .btn-outline:hover { background: #1e293b; }
 
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 0.8rem;
-        }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
 
         #userStatus {
             margin-top: 8px;
             font-size: 0.9rem;
             color: #94a3b8;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
@@ -118,37 +105,46 @@
             white-space: nowrap;
         }
 
-        /* POPUP STYLES */
+        /* POPUP STYLES - VERBETER VIR MOBIELE TOESTELLE */
         .popup-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(8px);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             animation: fadeIn 0.3s ease;
+            padding: 16px;
         }
 
-        .popup-overlay.show {
-            display: flex;
-        }
+        .popup-overlay.show { display: flex; }
 
         @keyframes fadeIn {
             0% { opacity: 0; transform: scale(0.95); }
             100% { opacity: 1; transform: scale(1); }
         }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+
         .popup-box {
             background: #1e293b;
-            padding: 32px 40px;
+            padding: 28px 24px;
             border-radius: 24px;
             max-width: 420px;
-            width: 90%;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid #334155;
             box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
             position: relative;
@@ -156,39 +152,46 @@
 
         .popup-box h2 {
             color: #e2e8f0;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             margin-bottom: 4px;
             text-align: center;
         }
 
         .popup-box .subtitle {
             color: #94a3b8;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             text-align: center;
             margin-bottom: 20px;
         }
 
-        .popup-box .input-group {
-            margin-bottom: 16px;
-        }
+        .popup-box .input-group { margin-bottom: 16px; }
 
         .popup-box .input-group label {
             display: block;
             color: #94a3b8;
             font-size: 0.85rem;
             margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         .popup-box .input-group input {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 16px;
+            padding-right: 44px;
             border-radius: 12px;
             border: 1px solid #2d3a52;
             background: #0b1220;
             color: white;
-            font-size: 1rem;
+            font-size: 16px;
             outline: none;
             transition: 0.15s;
+            height: 48px;
         }
 
         .popup-box .input-group input:focus {
@@ -196,28 +199,46 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
-        .popup-box .input-group input::placeholder {
-            color: #4b5a77;
+        .popup-box .input-group input::placeholder { color: #4b5a77; }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
         }
+        .toggle-password:hover { color: #94a3b8; }
 
         .popup-box .btn-group {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 24px;
             flex-wrap: wrap;
         }
 
         .popup-box .btn-group .btn {
             flex: 1;
             min-width: 100px;
-            padding: 12px 20px;
+            padding: 14px 20px;
             border: none;
             border-radius: 40px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1rem;
             cursor: pointer;
             transition: 0.15s;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            height: 48px;
         }
 
         .popup-box .btn-group .btn-primary { background: #2563eb; color: white; }
@@ -227,33 +248,56 @@
         .popup-box .btn-group .btn-success { background: #16a34a; color: white; }
         .popup-box .btn-group .btn-success:hover { background: #15803d; }
 
+        .btn-loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .popup-box .error-msg {
             color: #f87171;
             font-size: 0.9rem;
             margin-top: 12px;
             text-align: center;
             min-height: 24px;
+            font-weight: 500;
+            background: rgba(248, 113, 113, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            display: none;
         }
+        .popup-box .error-msg.show { display: block; }
 
         .popup-box .close-btn {
             position: absolute;
-            top: 12px;
+            top: 16px;
             right: 16px;
-            background: none;
+            background: #334155;
             border: none;
-            color: #64748b;
-            font-size: 1.5rem;
+            color: #cbd5e1;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.2rem;
             cursor: pointer;
             transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .popup-box .close-btn:hover {
-            color: #e2e8f0;
-            transform: rotate(90deg);
-        }
+        .popup-box .close-btn:hover { background: #475569; color: white; transform: rotate(90deg); }
 
         .popup-box .switch-action {
             text-align: center;
-            margin-top: 16px;
+            margin-top: 20px;
             color: #94a3b8;
             font-size: 0.9rem;
         }
@@ -261,10 +305,9 @@
             color: #60a5fa;
             cursor: pointer;
             text-decoration: none;
+            font-weight: 600;
         }
-        .popup-box .switch-action a:hover {
-            text-decoration: underline;
-        }
+        .popup-box .switch-action a:hover { text-decoration: underline; }
 
         /* SPEELTJIE STYLE */
         .game-wrapper {
@@ -278,12 +321,7 @@
             overflow: hidden;
             transition: opacity 0.3s, pointer-events 0.3s;
         }
-
-        .game-wrapper.disabled {
-            opacity: 0.5;
-            pointer-events: none;
-            filter: grayscale(0.5);
-        }
+        .game-wrapper.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
 
         .canvas-wrap {
             position: relative;
@@ -294,179 +332,85 @@
             width: 100%;
             border: 1px solid #2d3a52;
         }
+        #gameCanvas { display: block; width: 100%; height: 100%; background: transparent; cursor: pointer; }
 
-        #gameCanvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        .ui-panel {
-            margin-top: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .ui-panel { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
 
         .question-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            background: #0f172a;
-            padding: 12px 18px;
-            border-radius: 16px;
-            border-left: 4px solid #3b82f6;
-            min-height: 60px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            background: #0f172a; padding: 12px 18px; border-radius: 16px;
+            border-left: 4px solid #3b82f6; min-height: 60px;
         }
-
         .question-row .q-label {
-            font-size: 1.5rem;
-            font-weight: 500;
-            color: #f0f9ff;
-            word-break: break-word;
-            flex: 1;
-            min-width: 120px;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 1.5rem; font-weight: 500; color: #f0f9ff;
+            word-break: break-word; flex: 1; min-width: 120px;
         }
         .question-row .q-label sub { font-size: 0.65em; vertical-align: sub; }
         .question-row .q-label sup { font-size: 0.65em; vertical-align: super; }
-
         .question-row .q-hint {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            background: #1e293b;
-            padding: 4px 14px;
-            border-radius: 20px;
-            white-space: nowrap;
+            font-size: 0.8rem; color: #94a3b8; background: #1e293b;
+            padding: 4px 14px; border-radius: 20px; white-space: nowrap;
         }
 
-        .input-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
+        .input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .input-row input {
-            flex: 1;
-            min-width: 140px;
-            padding: 12px 18px;
-            border-radius: 40px;
-            border: 1px solid #2d3a52;
-            background: #0b1220;
-            color: white;
-            font-size: 1.05rem;
-            font-family: 'Courier New', monospace;
-            transition: 0.15s;
-            outline: none;
+            flex: 1; min-width: 140px; padding: 12px 18px; border-radius: 40px;
+            border: 1px solid #2d3a52; background: #0b1220; color: white;
+            font-size: 1.05rem; font-family: 'Courier New', monospace;
+            transition: 0.15s; outline: none;
         }
-        .input-row input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
+        .input-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         .input-row input::placeholder { color: #4b5a77; }
 
         .input-row .btn {
-            border: none;
-            border-radius: 40px;
-            padding: 12px 24px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: 0.15s;
-            letter-spacing: 0.2px;
-            white-space: nowrap;
+            border: none; border-radius: 40px; padding: 12px 24px;
+            font-weight: 600; font-size: 0.95rem; cursor: pointer;
+            transition: 0.15s; letter-spacing: 0.2px; white-space: nowrap;
         }
-
         .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         .btn-primary:hover { background: #1d4ed8; transform: scale(1.02); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .btn-lava {
-            background: #ea580c;
-            color: white;
-            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
+            background: #ea580c; color: white; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
             animation: lavaPulse 2s ease-in-out infinite;
         }
         .btn-lava:hover { background: #c2410c; transform: scale(1.04); }
-        .btn-lava.active {
-            background: #dc2626;
-            box-shadow: 0 0 20px rgba(220, 38, 38, 0.6);
-        }
-
+        .btn-lava.active { background: #dc2626; box-shadow: 0 0 20px rgba(220, 38, 38, 0.6); }
         @keyframes lavaPulse {
             0%, 100% { box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); }
             50% { box-shadow: 0 4px 30px rgba(234, 88, 12, 0.8); }
         }
 
-        .stats-row {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 0 4px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            align-items: center;
-        }
+        .stats-row { display: flex; gap: 20px; flex-wrap: wrap; padding: 0 4px; font-size: 0.9rem; color: #94a3b8; align-items: center; }
         .stats-row span { display: flex; align-items: center; gap: 6px; }
         .stats-row .num { font-weight: 700; color: #e2e8f0; font-size: 1.1rem; }
         .stats-row .num.gold { color: #fbbf24; }
         .stats-row .num.green { color: #4ade80; }
         .stats-row .num.blue { color: #60a5fa; }
         .stats-row .num.lava { color: #fb923c; }
-        .stats-row .num.danger { color: #f87171; }
         .stats-row .num.purple { color: #a78bfa; }
 
-        .feedback-msg {
-            font-size: 0.95rem;
-            min-height: 28px;
-            padding: 4px 6px;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
+        .feedback-msg { font-size: 0.95rem; min-height: 28px; padding: 4px 6px; border-radius: 8px; transition: 0.2s; }
         .feedback-msg.correct { color: #4ade80; }
         .feedback-msg.wrong { color: #f87171; }
         .feedback-msg.info { color: #94a3b8; }
-        .feedback-msg.lava-warning {
-            color: #fb923c;
-            font-weight: 600;
-            animation: lavaWarning 0.5s ease-in-out infinite alternate;
-        }
+        .feedback-msg.lava-warning { color: #fb923c; font-weight: 600; animation: lavaWarning 0.5s ease-in-out infinite alternate; }
         .feedback-msg.heart-loss { color: #fbbf24; font-weight: 600; }
-
-        @keyframes lavaWarning {
-            0% { opacity: 0.6; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.02); }
-        }
+        @keyframes lavaWarning { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.02); } }
 
         .game-over-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            border-radius: 20px;
-            flex-direction: column;
-            padding: 24px;
-            animation: fadeIn 0.5s ease;
+            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px); display: none; align-items: center;
+            justify-content: center; z-index: 20; border-radius: 20px;
+            flex-direction: column; padding: 24px; animation: fadeIn 0.5s ease;
         }
         .game-over-overlay.show { display: flex; }
 
         .game-over-box {
-            background: #1e293b;
-            padding: 32px 40px;
-            border-radius: 28px;
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-            border: 1px solid #334155;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            background: #1e293b; padding: 32px 40px; border-radius: 28px;
+            text-align: center; max-width: 400px; width: 100%;
+            border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
         .game-over-box h2 { font-size: 2rem; font-weight: 700; color: #f87171; margin-bottom: 4px; }
         .game-over-box .sub { color: #94a3b8; font-size: 1rem; margin-bottom: 16px; }
@@ -476,14 +420,7 @@
         .game-over-box .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
         .game-over-box .btn-group .btn { flex: 1; min-width: 100px; padding: 12px 20px; }
 
-        .stats-extra {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            color: #94a3b8;
-            font-size: 0.9rem;
-            flex-wrap: wrap;
-        }
+        .stats-extra { display: flex; justify-content: center; gap: 20px; color: #94a3b8; font-size: 0.9rem; flex-wrap: wrap; }
         .stats-extra span { display: flex; align-items: center; gap: 4px; }
         .stats-extra .num { font-weight: 600; color: #e2e8f0; }
 
@@ -525,7 +462,7 @@
                 <button class="btn btn-primary" id="showLoginBtn">🔓 Teken In</button>
                 <button class="btn btn-outline" id="showRegisterBtn">📝 Registreer</button>
                 <button class="btn btn-danger" id="logoutBtn" style="display:none;">🚪 Teken Uit</button>
-                <button class="btn btn-outline btn-sm" id="resetStatsBtn" style="display:none;">🗑️ Reset Stats</button>
+                <button class="btn btn-outline btn-sm" id="resetStatsBtn" style="display:none;">🗑️ Reset</button>
             </div>
             <div id="userStatus">
                 <div class="user-detail" id="userStatsDisplay" style="display:none;">
@@ -539,23 +476,37 @@
 
         <!-- LOGIN POPUP -->
         <div class="popup-overlay" id="loginPopup">
-            <div class="popup-box">
+            <div class="popup-box" id="loginBox">
                 <button class="close-btn" id="closeLoginPopup">✕</button>
                 <h2>🔓 Teken In</h2>
                 <p class="subtitle">Teken in om jou vordering te stoor</p>
+                
                 <div class="input-group">
                     <label>👤 Gebruikersnaam</label>
-                    <input type="text" id="loginUsername" placeholder="Voer jou gebruikersnaam in" autocomplete="username" />
+                    <div class="input-wrapper">
+                        <input type="text" id="loginUsername" placeholder="Jou gebruikersnaam" 
+                               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                    </div>
                 </div>
+                
                 <div class="input-group">
                     <label>🔑 Wagwoord</label>
-                    <input type="password" id="loginPassword" placeholder="Voer jou wagwoord in" autocomplete="current-password" />
+                    <div class="input-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Jou wagwoord" 
+                               autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <button class="toggle-password" onclick="togglePassword('loginPassword', this)" aria-label="Wys wagwoord">👁️</button>
+                    </div>
                 </div>
+                
                 <div class="error-msg" id="loginError"></div>
+                
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="loginSubmitBtn">🔓 Teken In</button>
+                    <button class="btn btn-primary" id="loginSubmitBtn">
+                        <span class="btn-text">🔓 Teken In</span>
+                    </button>
                     <button class="btn btn-secondary" id="loginCancelBtn">Kanselleer</button>
                 </div>
+                
                 <div class="switch-action">
                     Nie 'n gebruiker nie? <a id="switchToRegister">Registreer hier</a>
                 </div>
@@ -564,27 +515,46 @@
 
         <!-- REGISTER POPUP -->
         <div class="popup-overlay" id="registerPopup">
-            <div class="popup-box">
+            <div class="popup-box" id="registerBox">
                 <button class="close-btn" id="closeRegisterPopup">✕</button>
                 <h2>📝 Registreer</h2>
                 <p class="subtitle">Skep 'n nuwe gebruiker om jou vordering te stoor</p>
+                
                 <div class="input-group">
                     <label>👤 Kies 'n gebruikersnaam</label>
-                    <input type="text" id="registerUsername" placeholder="Minstens 3 karakters" autocomplete="username" />
+                    <div class="input-wrapper">
+                        <input type="text" id="registerUsername" placeholder="Minstens 3 karakters" 
+                               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                    </div>
                 </div>
+                
                 <div class="input-group">
                     <label>🔑 Kies 'n wagwoord</label>
-                    <input type="password" id="registerPassword" placeholder="Minstens 4 karakters" autocomplete="new-password" />
+                    <div class="input-wrapper">
+                        <input type="password" id="registerPassword" placeholder="Minstens 4 karakters" 
+                               autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <button class="toggle-password" onclick="togglePassword('registerPassword', this)" aria-label="Wys wagwoord">👁️</button>
+                    </div>
                 </div>
+                
                 <div class="input-group">
                     <label>🔑 Bevestig wagwoord</label>
-                    <input type="password" id="registerConfirmPassword" placeholder="Bevestig jou wagwoord" autocomplete="new-password" />
+                    <div class="input-wrapper">
+                        <input type="password" id="registerConfirmPassword" placeholder="Tik wagwoord weer" 
+                               autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <button class="toggle-password" onclick="togglePassword('registerConfirmPassword', this)" aria-label="Wys wagwoord">👁️</button>
+                    </div>
                 </div>
+                
                 <div class="error-msg" id="registerError"></div>
+                
                 <div class="btn-group">
-                    <button class="btn btn-success" id="registerSubmitBtn">📝 Registreer</button>
+                    <button class="btn btn-success" id="registerSubmitBtn">
+                        <span class="btn-text">📝 Registreer</span>
+                    </button>
                     <button class="btn btn-secondary" id="registerCancelBtn">Kanselleer</button>
                 </div>
+                
                 <div class="switch-action">
                     Het jy reeds 'n gebruiker? <a id="switchToLogin">Teken in hier</a>
                 </div>
@@ -623,7 +593,6 @@
                 </div>
 
                 <div class="input-row">
-                    <!-- Verbeter: Voorkom selfoon outokorreksie vir chemiese formules -->
                     <input type="text" id="answerInput" placeholder="Skryf jou antwoord..." 
                            autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     <button class="btn btn-primary" id="submitBtn">⏎ Submit</button>
@@ -645,42 +614,84 @@
 
     <script>
         // ================================================================
+        //   HULP-FUNKSIES VIR UI
+        // ================================================================
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+                btn.setAttribute('aria-label', 'Versteek wagwoord');
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+                btn.setAttribute('aria-label', 'Wys wagwoord');
+            }
+        }
+
+        function setLoading(btnId, isLoading, originalText) {
+            const btn = document.getElementById(btnId);
+            if (isLoading) {
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner"></div> Besig...';
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+                btn.innerHTML = `<span class="btn-text">${originalText}</span>`;
+            }
+        }
+
+        function showError(elementId, message, boxId = null) {
+            const errorEl = document.getElementById(elementId);
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            if (boxId) {
+                const box = document.getElementById(boxId);
+                box.classList.remove('shake');
+                void box.offsetWidth;
+                box.classList.add('shake');
+            }
+        }
+
+        function clearError(elementId) {
+            const errorEl = document.getElementById(elementId);
+            errorEl.textContent = '';
+            errorEl.classList.remove('show');
+        }
+
+        // ================================================================
         //   GEBRUIKER STELSEL
         // ================================================================
         class UserSystem {
             constructor() {
                 this.currentUser = null;
                 this.users = this.loadAllUsers();
-                this.storageKey = 'chemieUsers_v2';
+                this.storageKey = 'chemieUsers_v3';
             }
 
             loadAllUsers() {
                 try {
                     const data = localStorage.getItem(this.storageKey);
                     return data ? JSON.parse(data) : {};
-                } catch (e) {
-                    console.warn('Failed to load users:', e);
-                    return {};
-                }
+                } catch (e) { return {}; }
             }
 
             saveAllUsers() {
                 try {
                     localStorage.setItem(this.storageKey, JSON.stringify(this.users));
                     return true;
-                } catch (e) {
-                    console.warn('Failed to save users:', e);
-                    return false;
-                }
+                } catch (e) { return false; }
             }
 
             register(username, password, confirmPassword) {
-                if (this.users[username]) return { success: false, message: '❌ Gebruikersnaam bestaan reeds!' };
-                if (username.length < 3) return { success: false, message: '❌ Gebruikersnaam moet minstens 3 karakters wees!' };
+                const cleanUser = username.trim().toLowerCase();
+                if (this.users[cleanUser]) return { success: false, message: '❌ Gebruikersnaam bestaan reeds!' };
+                if (username.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
                 if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
                 if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
-                this.users[username] = {
+                this.users[cleanUser] = {
                     password: this.hashPassword(password),
                     stats: this.getDefaultStats(),
                     created: new Date().toISOString(),
@@ -691,15 +702,16 @@
             }
 
             login(username, password) {
-                const user = this.users[username];
+                const cleanUser = username.trim().toLowerCase();
+                const user = this.users[cleanUser];
                 if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
                 if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
 
                 user.lastLogin = new Date().toISOString();
                 this.saveAllUsers();
-                this.currentUser = username;
-                sessionStorage.setItem('chemieUser', username);
-                return { success: true, message: `✅ Welkom terug, ${username}!` };
+                this.currentUser = cleanUser;
+                sessionStorage.setItem('chemieUser', cleanUser);
+                return { success: true, message: `✅ Welkom terug, ${cleanUser}!` };
             }
 
             logout() {
@@ -753,14 +765,14 @@
         const userSystem = new UserSystem();
 
         // ================================================================
-        //   POPUP & UI FUNKSIES
+        //   POPUP & UI EVENT LISTENERS
         // ================================================================
         function showLoginPopup() {
             document.getElementById('loginPopup').classList.add('show');
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
-            document.getElementById('loginError').textContent = '';
-            document.getElementById('loginUsername').focus();
+            clearError('loginError');
+            setTimeout(() => document.getElementById('loginUsername').focus(), 100);
         }
 
         function hideLoginPopup() { document.getElementById('loginPopup').classList.remove('show'); }
@@ -769,8 +781,8 @@
             document.getElementById('registerUsername').value = '';
             document.getElementById('registerPassword').value = '';
             document.getElementById('registerConfirmPassword').value = '';
-            document.getElementById('registerError').textContent = '';
-            document.getElementById('registerUsername').focus();
+            clearError('registerError');
+            setTimeout(() => document.getElementById('registerUsername').focus(), 100);
         }
         function hideRegisterPopup() { document.getElementById('registerPopup').classList.remove('show'); }
 
@@ -808,9 +820,6 @@
             }
         }
 
-        // ================================================================
-        //   EVENT LISTENERS
-        // ================================================================
         document.getElementById('showLoginBtn').addEventListener('click', showLoginPopup);
         document.getElementById('showRegisterBtn').addEventListener('click', showRegisterPopup);
         document.getElementById('closeLoginPopup').addEventListener('click', hideLoginPopup);
@@ -825,16 +834,18 @@
             overlay.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); });
         });
 
-        document.getElementById('loginSubmitBtn').addEventListener('click', () => {
-            const username = document.getElementById('loginUsername').value.trim();
+        document.getElementById('loginSubmitBtn').addEventListener('click', async function() {
+            const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
             if (!username || !password) {
-                document.getElementById('loginError').textContent = '❌ Vul asseblief beide velde in!';
+                showError('loginError', '❌ Vul asseblief beide velde in!', 'loginBox');
                 return;
             }
+            setLoading('loginSubmitBtn', true, '🔓 Teken In');
+            await new Promise(r => setTimeout(r, 400));
             const result = userSystem.login(username, password);
             if (result.success) {
-                document.getElementById('loginError').textContent = '';
+                clearError('loginError');
                 hideLoginPopup();
                 updateUserUI();
                 loadUserStatsIntoGame();
@@ -842,30 +853,54 @@
                 feedbackMsg.className = 'feedback-msg correct';
                 feedbackMsg.textContent = result.message;
             } else {
-                document.getElementById('loginError').textContent = result.message;
+                showError('loginError', result.message, 'loginBox');
+                document.getElementById('loginPassword').value = '';
+                document.getElementById('loginPassword').focus();
             }
+            setLoading('loginSubmitBtn', false, '🔓 Teken In');
         });
 
-        document.getElementById('registerSubmitBtn').addEventListener('click', () => {
-            const username = document.getElementById('registerUsername').value.trim();
+        document.getElementById('registerSubmitBtn').addEventListener('click', async function() {
+            const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('registerConfirmPassword').value;
             if (!username || !password || !confirmPassword) {
-                document.getElementById('registerError').textContent = '❌ Vul asseblief alle velde in!';
+                showError('registerError', '❌ Vul asseblief alle velde in!', 'registerBox');
                 return;
             }
+            setLoading('registerSubmitBtn', true, '📝 Registreer');
+            await new Promise(r => setTimeout(r, 400));
             const result = userSystem.register(username, password, confirmPassword);
             if (result.success) {
-                document.getElementById('registerError').textContent = '';
+                clearError('registerError');
                 hideRegisterPopup();
                 document.getElementById('loginUsername').value = username;
-                document.getElementById('loginPassword').value = password;
+                document.getElementById('loginPassword').value = '';
                 setTimeout(showLoginPopup, 300);
                 feedbackMsg.className = 'feedback-msg info';
                 feedbackMsg.textContent = result.message + ' Teken nou in.';
             } else {
-                document.getElementById('registerError').textContent = result.message;
+                showError('registerError', result.message, 'registerBox');
             }
+            setLoading('registerSubmitBtn', false, '📝 Registreer');
+        });
+
+        ['loginPassword', 'registerConfirmPassword'].forEach(id => {
+            document.getElementById(id).addEventListener('keydown', e => { 
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById(id.includes('login') ? 'loginSubmitBtn' : 'registerSubmitBtn').click(); 
+                }
+            });
+        });
+        ['loginUsername', 'registerUsername', 'registerPassword'].forEach((id) => {
+            document.getElementById(id).addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const nextId = id === 'loginUsername' ? 'loginPassword' : (id === 'registerUsername' ? 'registerPassword' : 'registerConfirmPassword');
+                    document.getElementById(nextId).focus();
+                }
+            });
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -888,28 +923,11 @@
             }
         });
 
-        // Enter key handlers
-        ['loginPassword', 'registerConfirmPassword'].forEach(id => {
-            document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById(id.replace('Password', 'SubmitBtn').replace('ConfirmPassword', 'SubmitBtn')).click(); });
-        });
-        ['loginUsername', 'registerUsername', 'registerPassword'].forEach((id, i, arr) => {
-            document.getElementById(id).addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    const nextId = id === 'loginUsername' ? 'loginPassword' : (id === 'registerUsername' ? 'registerPassword' : 'registerConfirmPassword');
-                    document.getElementById(nextId).focus();
-                }
-            });
-        });
-
         function loadUserStatsIntoGame() {
             if (!userSystem.currentUser) return;
             const stats = userSystem.getUserStats();
             if (!stats) return;
-
-            if (typeof window.updateBestHeightFromUser === 'function') {
-                window.updateBestHeightFromUser(stats.bestHeight || 3);
-            }
-            // REGSTEL: Gebruik die korrekte HTML ID's
+            if (typeof window.updateBestHeightFromUser === 'function') window.updateBestHeightFromUser(stats.bestHeight || 3);
             const tc = document.getElementById('userTotalCorrect');
             const bs = document.getElementById('userBestStreak');
             const gp = document.getElementById('userGamesPlayed');
@@ -980,7 +998,7 @@
         let stack = [], score = 0, streak = 0, bestStreak = 0, lives = MAX_LIVES;
         let isGameOver = false, isAnswering = false;
         let currentQ = null, currentCorrect = '';
-        let charY = 0, charFalling = false, fallVelocity = 0, fallRotation = 0, charScale = 1;
+        let charFalling = false, fallVelocity = 0, fallRotation = 0, charScale = 1;
         let newBlockAnim = 0, newBlockColor = '', bounceAnim = 0, cameraOffset = 0, bestHeight = START_BLOCKS;
         let isLavaMode = false, lavaLevel = GROUND_Y, lavaSpeed = 0.05, lavaTime = 0, lavaBubbles = [], lavaWarningActive = false;
         let heartLossIndex = -1, heartLossTimer = 0, HEART_LOSS_DURATION = 40;
@@ -988,7 +1006,7 @@
         let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
 
         // ================================================================
-        //   BEST HEIGHT & INIT
+        //   GAME LOGIC
         // ================================================================
         function loadBestHeight() {
             try {
@@ -1029,6 +1047,10 @@
                 bestHeightDisplay.textContent = bestHeight;
             }
         };
+
+        function getColorPalette() {
+            return ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981', '#6366f1', '#f472b6', '#34d399', '#60a5fa', '#a78bfa'];
+        }
 
         function initGame(resetLava = true) {
             const colors = getColorPalette();
@@ -1077,13 +1099,6 @@
             feedbackMsg.textContent = isLavaMode ? '🌋 LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
         }
 
-        function getColorPalette() {
-            return ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981', '#6366f1', '#f472b6', '#34d399', '#60a5fa', '#a78bfa'];
-        }
-
-        // ================================================================
-        //   GAME LOGIC
-        // ================================================================
         function generateQuestion() {
             const idx = Math.floor(Math.random() * CHEM_BANK.length);
             const item = CHEM_BANK[idx];
@@ -1174,7 +1189,6 @@
                 newBlockAnim = 0; bounceAnim = 0; charScale = 1.15;
                 updateStats();
 
-                // REGSTEL: Gladde partikel-effek vir blok-stapeling
                 const topY = getStackTopY();
                 for (let i = 0; i < 12; i++) {
                     const angle = (i / 12) * Math.PI * 2;
@@ -1381,7 +1395,6 @@
                     const radius = size * (0.6 + Math.random() * 0.4);
                     obj.vertices.push({ angle: angle, radius: radius });
                 }
-                // REGSTEL: Genereer kleur een keer by skepping om flikkering te voorkom
                 const c = 60 + Math.random() * 30;
                 obj.rockColor1 = `rgb(${c+50},${c+30},${c+10})`;
                 obj.rockColor2 = `rgb(${c+10},${c-10},${c-20})`;
@@ -1416,7 +1429,6 @@
                 ctx.rotate(obj.rotation);
 
                 if (obj.type === 'rock') {
-                    // REGSTEL: Gebruik vooraf gegenereerde kleure
                     const grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, obj.size);
                     grad.addColorStop(0, obj.rockColor1);
                     grad.addColorStop(0.6, obj.rockColor2);
@@ -1585,7 +1597,7 @@
         // ================================================================
         function draw() {
             const W = canvas.width, H = canvas.height;
-            currentTime = Date.now(); // REGSTEL: Een keer per raampie vir prestasie
+            currentTime = Date.now();
 
             if (isLavaMode && !isGameOver) updateLava();
             updateCamera();
@@ -2011,7 +2023,6 @@
                 if (newBlockAnim > 1) newBlockAnim = 1;
             }
 
-            // REGSTEL: Gladde partikel-animasie vir blok-stapeling
             for (let i = blockParticles.length - 1; i >= 0; i--) {
                 const p = blockParticles[i];
                 p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life--;
@@ -2045,7 +2056,6 @@
             }
         }
 
-        // Veilige polyfill vir roundRect
         if (!CanvasRenderingContext2D.prototype.roundRect) {
             CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
                 if (r > w / 2) r = w / 2;
@@ -2156,6 +2166,7 @@
             return false;
         }
 
+        // Initialisatie
         loadBestHeight();
         initGame(true);
         gameLoop();
