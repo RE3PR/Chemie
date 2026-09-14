@@ -30,7 +30,6 @@
             max-width: 860px;
         }
 
-        /* GEBRUIKER STELSEL STYLE */
         #userSystem {
             background: #0f172a;
             border-radius: 16px;
@@ -111,7 +110,6 @@
             white-space: nowrap;
         }
 
-        /* POPUP STYLES */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -156,9 +154,7 @@
             position: relative;
         }
 
-        .popup-box.wide {
-            max-width: 600px;
-        }
+        .popup-box.wide { max-width: 600px; }
 
         .popup-box h2 {
             color: #e2e8f0;
@@ -258,10 +254,7 @@
         .popup-box .btn-group .btn-success { background: #16a34a; color: white; }
         .popup-box .btn-group .btn-success:hover { background: #15803d; }
 
-        .btn-loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
+        .btn-loading { opacity: 0.7; pointer-events: none; }
         .spinner {
             width: 18px;
             height: 18px;
@@ -320,7 +313,6 @@
         }
         .popup-box .switch-action a:hover { text-decoration: underline; }
 
-        /* LEADERBOARD STYLES */
         .leaderboard-tabs {
             display: flex;
             gap: 8px;
@@ -342,16 +334,8 @@
             white-space: nowrap;
         }
 
-        .leaderboard-tab:hover {
-            background: #1e293b;
-            color: #e2e8f0;
-        }
-
-        .leaderboard-tab.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
+        .leaderboard-tab:hover { background: #1e293b; color: #e2e8f0; }
+        .leaderboard-tab.active { background: #2563eb; color: white; border-color: #2563eb; }
 
         .leaderboard-list {
             display: flex;
@@ -372,10 +356,7 @@
             transition: 0.15s;
         }
 
-        .leaderboard-item:hover {
-            background: #1e293b;
-            border-color: #334155;
-        }
+        .leaderboard-item:hover { background: #1e293b; border-color: #334155; }
 
         .leaderboard-item.current-user {
             background: rgba(37, 99, 235, 0.15);
@@ -402,16 +383,8 @@
             gap: 2px;
         }
 
-        .leaderboard-name {
-            font-weight: 600;
-            color: #e2e8f0;
-            font-size: 1rem;
-        }
-
-        .leaderboard-meta {
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
+        .leaderboard-name { font-weight: 600; color: #e2e8f0; font-size: 1rem; }
+        .leaderboard-meta { font-size: 0.8rem; color: #94a3b8; }
 
         .leaderboard-value {
             font-size: 1.3rem;
@@ -428,7 +401,6 @@
             font-size: 0.95rem;
         }
 
-        /* SPEELTJIE STYLE */
         .game-wrapper {
             width: 100%;
             background: #111827;
@@ -578,7 +550,6 @@
 <body>
 
     <div id="appContainer">
-        <!-- GEBRUIKER STELSEL -->
         <div id="userSystem">
             <div id="userLoginForm">
                 <span id="currentUserDisplay" style="flex:1; color:#94a3b8; font-size:0.95rem; text-align:center;">👤 Nie ingeteken nie</span>
@@ -597,13 +568,11 @@
             </div>
         </div>
 
-        <!-- LOGIN POPUP -->
         <div class="popup-overlay" id="loginPopup">
             <div class="popup-box" id="loginBox">
                 <button class="close-btn" id="closeLoginPopup">✕</button>
                 <h2>🔓 Teken In</h2>
                 <p class="subtitle">Teken in om jou vordering te stoor</p>
-                
                 <div class="input-group">
                     <label>👤 Gebruikersnaam</label>
                     <div class="input-wrapper">
@@ -611,7 +580,6 @@
                                autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     </div>
                 </div>
-                
                 <div class="input-group">
                     <label>🔑 Wagwoord</label>
                     <div class="input-wrapper">
@@ -620,29 +588,20 @@
                         <button class="toggle-password" onclick="togglePassword('loginPassword', this)" aria-label="Wys wagwoord">👁️</button>
                     </div>
                 </div>
-                
                 <div class="error-msg" id="loginError"></div>
-                
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="loginSubmitBtn">
-                        <span class="btn-text">🔓 Teken In</span>
-                    </button>
+                    <button class="btn btn-primary" id="loginSubmitBtn"><span class="btn-text">🔓 Teken In</span></button>
                     <button class="btn btn-secondary" id="loginCancelBtn">Kanselleer</button>
                 </div>
-                
-                <div class="switch-action">
-                    Nie 'n gebruiker nie? <a id="switchToRegister">Registreer hier</a>
-                </div>
+                <div class="switch-action">Nie 'n gebruiker nie? <a id="switchToRegister">Registreer hier</a></div>
             </div>
         </div>
 
-        <!-- REGISTER POPUP -->
         <div class="popup-overlay" id="registerPopup">
             <div class="popup-box" id="registerBox">
                 <button class="close-btn" id="closeRegisterPopup">✕</button>
                 <h2>📝 Registreer</h2>
                 <p class="subtitle">Skep 'n nuwe gebruiker om jou vordering te stoor</p>
-                
                 <div class="input-group">
                     <label>👤 Kies 'n gebruikersnaam</label>
                     <div class="input-wrapper">
@@ -650,7 +609,6 @@
                                autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     </div>
                 </div>
-                
                 <div class="input-group">
                     <label>🔑 Kies 'n wagwoord</label>
                     <div class="input-wrapper">
@@ -659,7 +617,6 @@
                         <button class="toggle-password" onclick="togglePassword('registerPassword', this)" aria-label="Wys wagwoord">👁️</button>
                     </div>
                 </div>
-                
                 <div class="input-group">
                     <label>🔑 Bevestig wagwoord</label>
                     <div class="input-wrapper">
@@ -668,47 +625,33 @@
                         <button class="toggle-password" onclick="togglePassword('registerConfirmPassword', this)" aria-label="Wys wagwoord">👁️</button>
                     </div>
                 </div>
-                
                 <div class="error-msg" id="registerError"></div>
-                
                 <div class="btn-group">
-                    <button class="btn btn-success" id="registerSubmitBtn">
-                        <span class="btn-text">📝 Registreer</span>
-                    </button>
+                    <button class="btn btn-success" id="registerSubmitBtn"><span class="btn-text">📝 Registreer</span></button>
                     <button class="btn btn-secondary" id="registerCancelBtn">Kanselleer</button>
                 </div>
-                
-                <div class="switch-action">
-                    Het jy reeds 'n gebruiker? <a id="switchToLogin">Teken in hier</a>
-                </div>
+                <div class="switch-action">Het jy reeds 'n gebruiker? <a id="switchToLogin">Teken in hier</a></div>
             </div>
         </div>
 
-        <!-- LEADERBOARD POPUP -->
         <div class="popup-overlay" id="leaderboardPopup">
             <div class="popup-box wide" id="leaderboardBox">
                 <button class="close-btn" id="closeLeaderboardPopup">✕</button>
                 <h2>🏆 Ranglys</h2>
                 <p class="subtitle">Top spelers in Blok Stapel Chemie</p>
-                
                 <div class="leaderboard-tabs">
                     <button class="leaderboard-tab active" data-sort="bestHeight">🏔️ Hoogte</button>
                     <button class="leaderboard-tab" data-sort="totalCorrect">✅ Korrek</button>
                     <button class="leaderboard-tab" data-sort="bestStreak">🔥 Reeks</button>
                     <button class="leaderboard-tab" data-sort="gamesPlayed">🎮 Speletjies</button>
                 </div>
-                
-                <div class="leaderboard-list" id="leaderboardList">
-                    <!-- Dinamies gevul deur JavaScript -->
-                </div>
+                <div class="leaderboard-list" id="leaderboardList"></div>
             </div>
         </div>
 
-        <!-- SPEELTJIE -->
         <div class="game-wrapper" id="app">
             <div class="canvas-wrap" id="canvasWrap">
                 <canvas id="gameCanvas" width="800" height="480"></canvas>
-
                 <div class="game-over-overlay" id="gameOverOverlay">
                     <div class="game-over-box">
                         <h2 id="gameOverTitle">💥 O nee!</h2>
@@ -728,22 +671,18 @@
                     </div>
                 </div>
             </div>
-
             <div class="ui-panel">
                 <div class="question-row">
                     <span class="q-label" id="qText">H₂O</span>
                     <span class="q-hint" id="qHint">📝 tik die naam</span>
                 </div>
-
                 <div class="input-row">
                     <input type="text" id="answerInput" placeholder="Skryf jou antwoord..." 
                            autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     <button class="btn btn-primary" id="submitBtn">⏎ Submit</button>
                     <button class="btn btn-lava" id="lavaBtn">🌋 Lava Mode</button>
                 </div>
-
                 <div class="feedback-msg info" id="feedbackMsg">💡 Tik jou antwoord en druk Enter</div>
-
                 <div class="stats-row">
                     <span>✅ Korrek: <span class="num green" id="scoreDisplay">0</span></span>
                     <span>🔥 Reeks: <span class="num gold" id="streakDisplay">0</span></span>
@@ -764,11 +703,9 @@
             if (input.type === 'password') {
                 input.type = 'text';
                 btn.textContent = '🙈';
-                btn.setAttribute('aria-label', 'Versteek wagwoord');
             } else {
                 input.type = 'password';
                 btn.textContent = '👁️';
-                btn.setAttribute('aria-label', 'Wys wagwoord');
             }
         }
 
@@ -804,14 +741,17 @@
         }
 
         // ================================================================
-        //   GEBRUIKER STELSEL MET DATA-STOOR
+        //   GEBRUIKER STELSEL MET PERSISTENTE DATA-STOOR
         // ================================================================
         class UserSystem {
             constructor() {
+                // BELANGRIK: Stel storageKey EERSTE voordat loadAllUsers() geroep word
+                this.storageKey = 'chemieUsers_v5';
                 this.currentUser = null;
                 this.users = this.loadAllUsers();
-                this.storageKey = 'chemieUsers_v4';
                 this.lastSaved = null;
+                
+                console.log('📦 UserSystem geïnisialiseer met', Object.keys(this.users).length, 'gebruikers');
             }
 
             loadAllUsers() {
@@ -819,9 +759,10 @@
                     const data = localStorage.getItem(this.storageKey);
                     if (data) {
                         const parsed = JSON.parse(data);
-                        console.log('✅ Gebruikersdata gelaai:', Object.keys(parsed).length, 'gebruikers');
+                        console.log('✅ Gebruikersdata suksesvol gelaai vanaf localStorage');
                         return parsed;
                     }
+                    console.log('ℹ️ Geen bestaande gebruikersdata gevind nie');
                 } catch (e) {
                     console.error('❌ Fout met laai van gebruikersdata:', e);
                 }
@@ -830,9 +771,11 @@
 
             saveAllUsers() {
                 try {
-                    localStorage.setItem(this.storageKey, JSON.stringify(this.users));
+                    const dataToSave = JSON.stringify(this.users);
+                    localStorage.setItem(this.storageKey, dataToSave);
                     this.lastSaved = new Date().toISOString();
-                    console.log('✅ Gebruikersdata gestoor om', this.lastSaved);
+                    console.log('✅ Gebruikersdata suksesvol gestoor na localStorage om', this.lastSaved);
+                    console.log('📊 Data grootte:', (dataToSave.length / 1024).toFixed(2), 'KB');
                     return true;
                 } catch (e) {
                     console.error('❌ Fout met stoor van gebruikersdata:', e);
@@ -844,7 +787,6 @@
                 const trimmedUser = username.trim();
                 const cleanUser = trimmedUser.toLowerCase();
                 
-                // KYK OF GEBRUIKERSNAAM AL BESTAAN (case-insensitive)
                 if (this.users[cleanUser]) {
                     return { 
                         success: false, 
@@ -856,16 +798,20 @@
                 if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
                 if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
-                // STOOR MET LOWERCASE SLEUTEL MAAR BEHOU OORSPRONKLIKE CASE
                 this.users[cleanUser] = {
-                    displayName: trimmedUser, // Behou oorspronklike case vir display
+                    displayName: trimmedUser,
                     password: this.hashPassword(password),
                     stats: this.getDefaultStats(),
                     created: new Date().toISOString(),
                     lastLogin: new Date().toISOString(),
                 };
-                this.saveAllUsers();
-                return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+                
+                const saved = this.saveAllUsers();
+                if (saved) {
+                    return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+                } else {
+                    return { success: false, message: '❌ Kon nie data stoor nie!' };
+                }
             }
 
             login(username, password) {
@@ -878,7 +824,9 @@
                 user.lastLogin = new Date().toISOString();
                 this.saveAllUsers();
                 this.currentUser = cleanUser;
-                sessionStorage.setItem('chemieUser', cleanUser);
+                
+                // Gebruik localStorage vir persistent session (oorleef refresh)
+                localStorage.setItem('chemieCurrentUser', cleanUser);
                 
                 const displayName = user.displayName || cleanUser;
                 return { success: true, message: `✅ Welkom terug, ${displayName}!` };
@@ -886,7 +834,7 @@
 
             logout() {
                 this.currentUser = null;
-                sessionStorage.removeItem('chemieUser');
+                localStorage.removeItem('chemieCurrentUser');
                 return { success: true, message: '👋 Jy is uitgeteken!' };
             }
 
@@ -906,8 +854,7 @@
                 const user = this.users[this.currentUser];
                 if (!user) return false;
                 user.stats = { ...user.stats, ...newStats };
-                this.saveAllUsers();
-                return true;
+                return this.saveAllUsers();
             }
 
             getDefaultStats() {
@@ -933,19 +880,17 @@
                 return hash.toString(36);
             }
 
-            // LEADERBOARD FUNKSIE
             getLeaderboard(sortBy = 'bestHeight', limit = 50) {
                 const entries = Object.entries(this.users).map(([username, data]) => ({
-                    username: data.displayName || username, // Gebruik display name
+                    username: data.displayName || username,
                     stats: data.stats || this.getDefaultStats(),
                     lastLogin: data.lastLogin,
                 }));
 
-                // Sorteer volgens die gekose kriteria
                 entries.sort((a, b) => {
                     const valA = a.stats[sortBy] || 0;
                     const valB = b.stats[sortBy] || 0;
-                    return valB - valA; // Aflopend (hoogste eerste)
+                    return valB - valA;
                 });
 
                 return entries.slice(0, limit);
@@ -1053,7 +998,6 @@
             }
         }
 
-        // Event Listeners
         document.getElementById('showLoginBtn').addEventListener('click', showLoginPopup);
         document.getElementById('showRegisterBtn').addEventListener('click', showRegisterPopup);
         document.getElementById('showLeaderboardBtn').addEventListener('click', showLeaderboardPopup);
@@ -1070,7 +1014,6 @@
             overlay.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); });
         });
 
-        // Leaderboard tabs
         document.querySelectorAll('.leaderboard-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
@@ -1119,7 +1062,6 @@
             if (result.success) {
                 clearError('registerError');
                 hideRegisterPopup();
-                // Auto-login na registrasie
                 const loginResult = userSystem.login(username, password);
                 if (loginResult.success) {
                     updateUserUI();
@@ -2391,28 +2333,40 @@
 
         canvas.addEventListener('click', () => { if (!isGameOver) answerInput.focus(); });
 
+        // ================================================================
+        //   SESSION HERSTEL - Gebruik localStorage vir persistent session
+        // ================================================================
         function checkSession() {
-            const savedUser = sessionStorage.getItem('chemieUser');
+            // Gebruik localStorage in plaas van sessionStorage vir persistent session
+            const savedUser = localStorage.getItem('chemieCurrentUser');
             if (savedUser && userSystem.users[savedUser]) {
                 userSystem.currentUser = savedUser;
                 updateUserUI();
                 loadUserStatsIntoGame();
+                console.log('✅ Session herstel vir gebruiker:', userSystem.getDisplayName());
                 setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
                 return true;
             }
+            console.log('ℹ️ Geen aktiewe session gevind nie');
             return false;
         }
 
-        // Initialisatie
+        // ================================================================
+        //   INITIALISASIE
+        // ================================================================
+        console.log('🎮 Blok Stapel Chemie word gelaai...');
+        console.log('📦 localStorage sleutel:', userSystem.storageKey);
+        console.log('👤 Geregistreerde gebruikers:', Object.keys(userSystem.users).length);
+        
         loadBestHeight();
         initGame(true);
         gameLoop();
         answerInput.focus();
+        
+        // Herstel session na 'n kort vertraging
         setTimeout(checkSession, 200);
 
-        console.log('🧱 Blok Stapel Chemie • ❤️ 3 harte met animasie!');
-        console.log('👤 Gebruiker stelsel is aktief!');
-        console.log('🏆 Ranglys beskikbaar!');
+        console.log('✅ Blok Stapel Chemie suksesvol gelaai!');
         window.userSystem = userSystem;
     </script>
 </body>
