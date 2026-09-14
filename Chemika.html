@@ -76,6 +76,14 @@
 
         .btn-danger { background: #dc2626; color: white; }
         .btn-danger:hover { background: #b91c1c; }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1a2e;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+        .btn-gold:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4); }
+
         .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
 
         #userStatus {
@@ -105,7 +113,7 @@
             white-space: nowrap;
         }
 
-        /* POPUP STYLES - VERBETER VIR MOBIELE TOESTELLE */
+        /* POPUP STYLES */
         .popup-overlay {
             position: fixed;
             top: 0;
@@ -148,6 +156,10 @@
             border: 1px solid #334155;
             box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
             position: relative;
+        }
+
+        .popup-box.wide {
+            max-width: 600px;
         }
 
         .popup-box h2 {
@@ -292,6 +304,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 10;
         }
         .popup-box .close-btn:hover { background: #475569; color: white; transform: rotate(90deg); }
 
@@ -308,6 +321,114 @@
             font-weight: 600;
         }
         .popup-box .switch-action a:hover { text-decoration: underline; }
+
+        /* LEADERBOARD STYLES */
+        .leaderboard-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .leaderboard-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #334155;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.15s;
+            white-space: nowrap;
+        }
+
+        .leaderboard-tab:hover {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .leaderboard-tab.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            transition: 0.15s;
+        }
+
+        .leaderboard-item:hover {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        .leaderboard-item.current-user {
+            background: rgba(37, 99, 235, 0.15);
+            border-color: #3b82f6;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+        }
+
+        .leaderboard-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .leaderboard-rank.gold { color: #fbbf24; }
+        .leaderboard-rank.silver { color: #cbd5e1; }
+        .leaderboard-rank.bronze { color: #fb923c; }
+        .leaderboard-rank.normal { color: #64748b; }
+
+        .leaderboard-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            color: #e2e8f0;
+            font-size: 1rem;
+        }
+
+        .leaderboard-meta {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .leaderboard-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fbbf24;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        .leaderboard-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-size: 0.95rem;
+        }
 
         /* SPEELTJIE STYLE */
         .game-wrapper {
@@ -436,6 +557,10 @@
             .popup-box { padding: 24px 20px; }
             .popup-box h2 { font-size: 1.4rem; }
             #userLoginForm .btn { font-size: 0.85rem; padding: 8px 14px; }
+            .leaderboard-tab { font-size: 0.75rem; padding: 6px 12px; }
+            .leaderboard-item { padding: 10px 12px; gap: 8px; }
+            .leaderboard-rank { font-size: 1.2rem; min-width: 32px; }
+            .leaderboard-value { font-size: 1.1rem; }
         }
 
         @media (max-width: 400px) {
@@ -459,6 +584,7 @@
         <div id="userSystem">
             <div id="userLoginForm">
                 <span id="currentUserDisplay" style="flex:1; color:#94a3b8; font-size:0.95rem; text-align:center;">👤 Nie ingeteken nie</span>
+                <button class="btn btn-gold" id="showLeaderboardBtn">🏆 Ranglys</button>
                 <button class="btn btn-primary" id="showLoginBtn">🔓 Teken In</button>
                 <button class="btn btn-outline" id="showRegisterBtn">📝 Registreer</button>
                 <button class="btn btn-danger" id="logoutBtn" style="display:none;">🚪 Teken Uit</button>
@@ -557,6 +683,26 @@
                 
                 <div class="switch-action">
                     Het jy reeds 'n gebruiker? <a id="switchToLogin">Teken in hier</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEADERBOARD POPUP -->
+        <div class="popup-overlay" id="leaderboardPopup">
+            <div class="popup-box wide" id="leaderboardBox">
+                <button class="close-btn" id="closeLeaderboardPopup">✕</button>
+                <h2>🏆 Ranglys</h2>
+                <p class="subtitle">Top spelers in Blok Stapel Chemie</p>
+                
+                <div class="leaderboard-tabs">
+                    <button class="leaderboard-tab active" data-sort="bestHeight">🏔️ Hoogte</button>
+                    <button class="leaderboard-tab" data-sort="totalCorrect">✅ Korrek</button>
+                    <button class="leaderboard-tab" data-sort="bestStreak">🔥 Reeks</button>
+                    <button class="leaderboard-tab" data-sort="gamesPlayed">🎮 Speletjies</button>
+                </div>
+                
+                <div class="leaderboard-list" id="leaderboardList">
+                    <!-- Dinamies gevul deur JavaScript -->
                 </div>
             </div>
         </div>
@@ -661,27 +807,40 @@
         }
 
         // ================================================================
-        //   GEBRUIKER STELSEL
+        //   GEBRUIKER STELSEL MET DATA-STOOR
         // ================================================================
         class UserSystem {
             constructor() {
                 this.currentUser = null;
                 this.users = this.loadAllUsers();
                 this.storageKey = 'chemieUsers_v3';
+                this.lastSaved = null;
             }
 
             loadAllUsers() {
                 try {
                     const data = localStorage.getItem(this.storageKey);
-                    return data ? JSON.parse(data) : {};
-                } catch (e) { return {}; }
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        console.log('✅ Gebruikersdata gelaai:', Object.keys(parsed).length, 'gebruikers');
+                        return parsed;
+                    }
+                } catch (e) {
+                    console.error('❌ Fout met laai van gebruikersdata:', e);
+                }
+                return {};
             }
 
             saveAllUsers() {
                 try {
                     localStorage.setItem(this.storageKey, JSON.stringify(this.users));
+                    this.lastSaved = new Date().toISOString();
+                    console.log('✅ Gebruikersdata gestoor om', this.lastSaved);
                     return true;
-                } catch (e) { return false; }
+                } catch (e) {
+                    console.error('❌ Fout met stoor van gebruikersdata:', e);
+                    return false;
+                }
             }
 
             register(username, password, confirmPassword) {
@@ -736,8 +895,13 @@
 
             getDefaultStats() {
                 return {
-                    totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestHeight: 3,
-                    gamesPlayed: 0, lavaModeUsed: 0, totalBlocksStacked: 0,
+                    totalCorrect: 0,
+                    totalWrong: 0,
+                    bestStreak: 0,
+                    bestHeight: 3,
+                    gamesPlayed: 0,
+                    lavaModeUsed: 0,
+                    totalBlocksStacked: 0,
                     lastPlayed: new Date().toISOString(),
                 };
             }
@@ -760,6 +924,24 @@
                 this.saveAllUsers();
                 return { success: true, message: '✅ Statistieke is teruggestel!' };
             }
+
+            // LEADERBOARD FUNKSIE
+            getLeaderboard(sortBy = 'bestHeight', limit = 50) {
+                const entries = Object.entries(this.users).map(([username, data]) => ({
+                    username,
+                    stats: data.stats || this.getDefaultStats(),
+                    lastLogin: data.lastLogin,
+                }));
+
+                // Sorteer volgens die gekose kriteria
+                entries.sort((a, b) => {
+                    const valA = a.stats[sortBy] || 0;
+                    const valB = b.stats[sortBy] || 0;
+                    return valB - valA; // Aflopend (hoogste eerste)
+                });
+
+                return entries.slice(0, limit);
+            }
         }
 
         const userSystem = new UserSystem();
@@ -776,6 +958,7 @@
         }
 
         function hideLoginPopup() { document.getElementById('loginPopup').classList.remove('show'); }
+        
         function showRegisterPopup() {
             document.getElementById('registerPopup').classList.add('show');
             document.getElementById('registerUsername').value = '';
@@ -784,7 +967,58 @@
             clearError('registerError');
             setTimeout(() => document.getElementById('registerUsername').focus(), 100);
         }
+        
         function hideRegisterPopup() { document.getElementById('registerPopup').classList.remove('show'); }
+
+        function showLeaderboardPopup() {
+            document.getElementById('leaderboardPopup').classList.add('show');
+            renderLeaderboard('bestHeight');
+        }
+
+        function hideLeaderboardPopup() {
+            document.getElementById('leaderboardPopup').classList.remove('show');
+        }
+
+        function renderLeaderboard(sortBy) {
+            const list = document.getElementById('leaderboardList');
+            const leaderboard = userSystem.getLeaderboard(sortBy, 50);
+
+            if (leaderboard.length === 0) {
+                list.innerHTML = '<div class="leaderboard-empty">🎮 Geen spelers nog nie.<br>Speel om op die ranglys te verskyn!</div>';
+                return;
+            }
+
+            const sortLabels = {
+                bestHeight: '🏔️ Hoogte',
+                totalCorrect: '✅ Korrek',
+                bestStreak: '🔥 Reeks',
+                gamesPlayed: '🎮 Speletjies'
+            };
+
+            let html = '';
+            leaderboard.forEach((entry, index) => {
+                const rank = index + 1;
+                const isCurrentUser = userSystem.currentUser === entry.username;
+                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
+                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+                
+                const value = entry.stats[sortBy] || 0;
+                const lastPlayed = new Date(entry.lastLogin).toLocaleDateString('af-ZA');
+
+                html += `
+                    <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                        <div class="leaderboard-rank ${rankClass}">${medal}</div>
+                        <div class="leaderboard-info">
+                            <div class="leaderboard-name">${entry.username} ${isCurrentUser ? '(Jy)' : ''}</div>
+                            <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
+                        </div>
+                        <div class="leaderboard-value">${value}</div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+        }
 
         function updateUserUI() {
             const currentUserDisplay = document.getElementById('currentUserDisplay');
@@ -820,18 +1054,30 @@
             }
         }
 
+        // Event Listeners
         document.getElementById('showLoginBtn').addEventListener('click', showLoginPopup);
         document.getElementById('showRegisterBtn').addEventListener('click', showRegisterPopup);
+        document.getElementById('showLeaderboardBtn').addEventListener('click', showLeaderboardPopup);
         document.getElementById('closeLoginPopup').addEventListener('click', hideLoginPopup);
         document.getElementById('loginCancelBtn').addEventListener('click', hideLoginPopup);
         document.getElementById('closeRegisterPopup').addEventListener('click', hideRegisterPopup);
         document.getElementById('registerCancelBtn').addEventListener('click', hideRegisterPopup);
+        document.getElementById('closeLeaderboardPopup').addEventListener('click', hideLeaderboardPopup);
 
         document.getElementById('switchToRegister').addEventListener('click', () => { hideLoginPopup(); setTimeout(showRegisterPopup, 200); });
         document.getElementById('switchToLogin').addEventListener('click', () => { hideRegisterPopup(); setTimeout(showLoginPopup, 200); });
 
         document.querySelectorAll('.popup-overlay').forEach(overlay => {
             overlay.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('show'); });
+        });
+
+        // Leaderboard tabs
+        document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                renderLeaderboard(this.dataset.sort);
+            });
         });
 
         document.getElementById('loginSubmitBtn').addEventListener('click', async function() {
@@ -2175,6 +2421,7 @@
 
         console.log('🧱 Blok Stapel Chemie • ❤️ 3 harte met animasie!');
         console.log('👤 Gebruiker stelsel is aktief!');
+        console.log('🏆 Ranglys beskikbaar!');
         window.userSystem = userSystem;
     </script>
 </body>
