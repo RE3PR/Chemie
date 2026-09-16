@@ -4,475 +4,104 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>🧱 Blok Stapel • Chemie • Harte</title>
+    
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background: #0b1120;
-            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #e2e8f0;
-            padding: 12px;
-            margin: 0;
-            overflow-x: hidden;
-        }
-
-        #appContainer {
-            width: 100%;
-            max-width: 860px;
-        }
-
-        #userSystem {
-            background: #0f172a;
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 16px;
-            border: 1px solid #1e293b;
-        }
-
-        #userLoginForm {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #userLoginForm .btn {
-            border: none;
-            border-radius: 40px;
-            padding: 10px 20px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: 0.15s;
-            letter-spacing: 0.2px;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { background: #0b1120; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #e2e8f0; padding: 12px; margin: 0; overflow-x: hidden; }
+        #appContainer { width: 100%; max-width: 860px; }
+        #userSystem { background: #0f172a; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px solid #1e293b; }
+        #userLoginForm { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+        #userLoginForm .btn { border: none; border-radius: 40px; padding: 10px 20px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.15s; letter-spacing: 0.2px; white-space: nowrap; }
+        .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         .btn-primary:hover { background: #1d4ed8; transform: scale(1.02); }
         .btn-primary:active { transform: scale(0.98); }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #334155;
-            color: #cbd5e1;
-        }
+        .btn-outline { background: transparent; border: 1px solid #334155; color: #cbd5e1; }
         .btn-outline:hover { background: #1e293b; }
-
         .btn-danger { background: #dc2626; color: white; }
         .btn-danger:hover { background: #b91c1c; }
-
-        .btn-gold {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #1a1a2e;
-            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-        }
+        .btn-gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1a1a2e; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); }
         .btn-gold:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4); }
-
-        #userStatus {
-            margin-top: 8px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        #userStatus .user-detail {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-
-        #userStatus .user-detail span {
-            padding: 4px 12px;
-            background: #1e293b;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            white-space: nowrap;
-        }
-
-        .popup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-            padding: 16px;
-        }
-
+        #userStatus { margin-top: 8px; font-size: 0.9rem; color: #94a3b8; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+        #userStatus .user-detail { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%; }
+        #userStatus .user-detail span { padding: 4px 12px; background: #1e293b; border-radius: 12px; font-size: 0.85rem; white-space: nowrap; }
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease; padding: 16px; }
         .popup-overlay.show { display: flex; }
-
-        @keyframes fadeIn {
-            0% { opacity: 0; transform: scale(0.95); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-            20%, 40%, 60%, 80% { transform: translateX(4px); }
-        }
-
+        @keyframes fadeIn { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
         .shake { animation: shake 0.4s ease-in-out; }
-
-        .popup-box {
-            background: #1e293b;
-            padding: 28px 24px;
-            border-radius: 24px;
-            max-width: 420px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid #334155;
-            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
-            position: relative;
-        }
-
+        .popup-box { background: #1e293b; padding: 28px 24px; border-radius: 24px; max-width: 420px; width: 100%; max-height: 90vh; overflow-y: auto; border: 1px solid #334155; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6); position: relative; }
         .popup-box.wide { max-width: 600px; }
-
-        .popup-box h2 {
-            color: #e2e8f0;
-            font-size: 1.6rem;
-            margin-bottom: 4px;
-            text-align: center;
-        }
-
-        .popup-box .subtitle {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
+        .popup-box h2 { color: #e2e8f0; font-size: 1.6rem; margin-bottom: 4px; text-align: center; }
+        .popup-box .subtitle { color: #94a3b8; font-size: 0.9rem; text-align: center; margin-bottom: 20px; }
         .popup-box .input-group { margin-bottom: 16px; }
-
-        .popup-box .input-group label {
-            display: block;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .popup-box .input-group input {
-            width: 100%;
-            padding: 14px 16px;
-            padding-right: 44px;
-            border-radius: 12px;
-            border: 1px solid #2d3a52;
-            background: #0b1220;
-            color: white;
-            font-size: 16px;
-            outline: none;
-            transition: 0.15s;
-            height: 48px;
-        }
-
-        .popup-box .input-group input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-
+        .popup-box .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; font-weight: 500; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .popup-box .input-group input { width: 100%; padding: 14px 16px; padding-right: 44px; border-radius: 12px; border: 1px solid #2d3a52; background: #0b1220; color: white; font-size: 16px; outline: none; transition: 0.15s; height: 48px; }
+        .popup-box .input-group input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         .popup-box .input-group input::placeholder { color: #4b5a77; }
-
-        .toggle-password {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            color: #64748b;
-            cursor: pointer;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-        }
+        .toggle-password { position: absolute; right: 12px; background: none; border: none; color: #64748b; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .toggle-password:hover { color: #94a3b8; }
-
-        .popup-box .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-        }
-
-        .popup-box .btn-group .btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.15s;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            height: 48px;
-        }
-
+        .popup-box .btn-group { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+        .popup-box .btn-group .btn { flex: 1; min-width: 100px; padding: 14px 20px; border: none; border-radius: 40px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.15s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; }
         .popup-box .btn-group .btn-primary { background: #2563eb; color: white; }
         .popup-box .btn-group .btn-primary:hover { background: #1d4ed8; }
         .popup-box .btn-group .btn-secondary { background: transparent; border: 1px solid #334155; color: #94a3b8; }
         .popup-box .btn-group .btn-secondary:hover { background: #1e293b; }
         .popup-box .btn-group .btn-success { background: #16a34a; color: white; }
         .popup-box .btn-group .btn-success:hover { background: #15803d; }
-
         .btn-loading { opacity: 0.7; pointer-events: none; }
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .popup-box .error-msg {
-            color: #f87171;
-            font-size: 0.9rem;
-            margin-top: 12px;
-            text-align: center;
-            min-height: 24px;
-            font-weight: 500;
-            background: rgba(248, 113, 113, 0.1);
-            padding: 8px;
-            border-radius: 8px;
-            display: none;
-        }
+        .popup-box .error-msg { color: #f87171; font-size: 0.9rem; margin-top: 12px; text-align: center; min-height: 24px; font-weight: 500; background: rgba(248, 113, 113, 0.1); padding: 8px; border-radius: 8px; display: none; }
         .popup-box .error-msg.show { display: block; }
-
-        .popup-box .close-btn {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: #334155;
-            border: none;
-            color: #cbd5e1;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
+        .popup-box .close-btn { position: absolute; top: 16px; right: 16px; background: #334155; border: none; color: #cbd5e1; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; transition: 0.15s; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .popup-box .close-btn:hover { background: #475569; color: white; transform: rotate(90deg); }
-
-        .popup-box .switch-action {
-            text-align: center;
-            margin-top: 20px;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        .popup-box .switch-action a {
-            color: #60a5fa;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: 600;
-        }
+        .popup-box .switch-action { text-align: center; margin-top: 20px; color: #94a3b8; font-size: 0.9rem; }
+        .popup-box .switch-action a { color: #60a5fa; cursor: pointer; text-decoration: none; font-weight: 600; }
         .popup-box .switch-action a:hover { text-decoration: underline; }
-
-        .leaderboard-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .leaderboard-tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #334155;
-            background: transparent;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.15s;
-            white-space: nowrap;
-        }
-
+        .leaderboard-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+        .leaderboard-tab { padding: 8px 16px; border-radius: 20px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.15s; white-space: nowrap; }
         .leaderboard-tab:hover { background: #1e293b; color: #e2e8f0; }
         .leaderboard-tab.active { background: #2563eb; color: white; border-color: #2563eb; }
-
-        .leaderboard-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .leaderboard-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: #0f172a;
-            border-radius: 12px;
-            border: 1px solid #1e293b;
-            transition: 0.15s;
-        }
-
+        .leaderboard-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+        .leaderboard-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #0f172a; border-radius: 12px; border: 1px solid #1e293b; transition: 0.15s; }
         .leaderboard-item:hover { background: #1e293b; border-color: #334155; }
-
-        .leaderboard-item.current-user {
-            background: rgba(37, 99, 235, 0.15);
-            border-color: #3b82f6;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
-        }
-
-        .leaderboard-rank {
-            font-size: 1.5rem;
-            font-weight: 700;
-            min-width: 40px;
-            text-align: center;
-        }
-
+        .leaderboard-item.current-user { background: rgba(37, 99, 235, 0.15); border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.2); }
+        .leaderboard-rank { font-size: 1.5rem; font-weight: 700; min-width: 40px; text-align: center; }
         .leaderboard-rank.gold { color: #fbbf24; }
         .leaderboard-rank.silver { color: #cbd5e1; }
         .leaderboard-rank.bronze { color: #fb923c; }
         .leaderboard-rank.normal { color: #64748b; }
-
-        .leaderboard-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
+        .leaderboard-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
         .leaderboard-name { font-weight: 600; color: #e2e8f0; font-size: 1rem; }
         .leaderboard-meta { font-size: 0.8rem; color: #94a3b8; }
-
-        .leaderboard-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #fbbf24;
-            min-width: 60px;
-            text-align: right;
-        }
-
-        .leaderboard-empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: #64748b;
-            font-size: 0.95rem;
-        }
-
-        .game-wrapper {
-            width: 100%;
-            background: #111827;
-            border-radius: 32px;
-            padding: 20px 20px 24px;
-            box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.9);
-            border: 1px solid #1e293b;
-            position: relative;
-            overflow: hidden;
-            transition: opacity 0.3s, pointer-events 0.3s;
-        }
+        .leaderboard-value { font-size: 1.3rem; font-weight: 700; color: #fbbf24; min-width: 60px; text-align: right; }
+        .leaderboard-empty { text-align: center; padding: 40px 20px; color: #64748b; font-size: 0.95rem; }
+        .game-wrapper { width: 100%; background: #111827; border-radius: 32px; padding: 20px 20px 24px; box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.9); border: 1px solid #1e293b; position: relative; overflow: hidden; transition: opacity 0.3s, pointer-events 0.3s; }
         .game-wrapper.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
-
-        .canvas-wrap {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #1a2332;
-            aspect-ratio: 800 / 480;
-            width: 100%;
-            border: 1px solid #2d3a52;
-        }
+        .canvas-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #1a2332; aspect-ratio: 800 / 480; width: 100%; border: 1px solid #2d3a52; }
         #gameCanvas { display: block; width: 100%; height: 100%; background: transparent; cursor: pointer; }
-
         .ui-panel { margin-top: 18px; display: flex; flex-direction: column; gap: 12px; }
-
-        .question-row {
-            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-            background: #0f172a; padding: 12px 18px; border-radius: 16px;
-            border-left: 4px solid #3b82f6; min-height: 60px;
-        }
-        .question-row .q-label {
-            font-size: 1.5rem; font-weight: 500; color: #f0f9ff;
-            word-break: break-word; flex: 1; min-width: 120px;
-        }
+        .question-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: #0f172a; padding: 12px 18px; border-radius: 16px; border-left: 4px solid #3b82f6; min-height: 60px; }
+        .question-row .q-label { font-size: 1.5rem; font-weight: 500; color: #f0f9ff; word-break: break-word; flex: 1; min-width: 120px; }
         .question-row .q-label sub { font-size: 0.65em; vertical-align: sub; }
         .question-row .q-label sup { font-size: 0.65em; vertical-align: super; }
-        .question-row .q-hint {
-            font-size: 0.8rem; color: #94a3b8; background: #1e293b;
-            padding: 4px 14px; border-radius: 20px; white-space: nowrap;
-        }
-
+        .question-row .q-hint { font-size: 0.8rem; color: #94a3b8; background: #1e293b; padding: 4px 14px; border-radius: 20px; white-space: nowrap; }
         .input-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .input-row input {
-            flex: 1; min-width: 140px; padding: 12px 18px; border-radius: 40px;
-            border: 1px solid #2d3a52; background: #0b1220; color: white;
-            font-size: 1.05rem; font-family: 'Courier New', monospace;
-            transition: 0.15s; outline: none;
-        }
+        .input-row input { flex: 1; min-width: 140px; padding: 12px 18px; border-radius: 40px; border: 1px solid #2d3a52; background: #0b1220; color: white; font-size: 1.05rem; font-family: 'Courier New', monospace; transition: 0.15s; outline: none; }
         .input-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
         .input-row input::placeholder { color: #4b5a77; }
-
-        .input-row .btn {
-            border: none; border-radius: 40px; padding: 12px 24px;
-            font-weight: 600; font-size: 0.95rem; cursor: pointer;
-            transition: 0.15s; letter-spacing: 0.2px; white-space: nowrap;
-        }
+        .input-row .btn { border: none; border-radius: 40px; padding: 12px 24px; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.15s; letter-spacing: 0.2px; white-space: nowrap; }
         .btn-primary { background: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         .btn-primary:hover { background: #1d4ed8; transform: scale(1.02); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .btn-lava {
-            background: #ea580c; color: white; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4);
-            animation: lavaPulse 2s ease-in-out infinite;
-        }
+        .btn-lava { background: #ea580c; color: white; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); animation: lavaPulse 2s ease-in-out infinite; }
         .btn-lava:hover { background: #c2410c; transform: scale(1.04); }
         .btn-lava.active { background: #dc2626; box-shadow: 0 0 20px rgba(220, 38, 38, 0.6); }
-        @keyframes lavaPulse {
-            0%, 100% { box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); }
-            50% { box-shadow: 0 4px 30px rgba(234, 88, 12, 0.8); }
-        }
-
+        @keyframes lavaPulse { 0%, 100% { box-shadow: 0 4px 12px rgba(234, 88, 12, 0.4); } 50% { box-shadow: 0 4px 30px rgba(234, 88, 12, 0.8); } }
         .stats-row { display: flex; gap: 20px; flex-wrap: wrap; padding: 0 4px; font-size: 0.9rem; color: #94a3b8; align-items: center; }
         .stats-row span { display: flex; align-items: center; gap: 6px; }
         .stats-row .num { font-weight: 700; color: #e2e8f0; font-size: 1.1rem; }
@@ -481,7 +110,6 @@
         .stats-row .num.blue { color: #60a5fa; }
         .stats-row .num.lava { color: #fb923c; }
         .stats-row .num.purple { color: #a78bfa; }
-
         .feedback-msg { font-size: 0.95rem; min-height: 28px; padding: 4px 6px; border-radius: 8px; transition: 0.2s; }
         .feedback-msg.correct { color: #4ade80; }
         .feedback-msg.wrong { color: #f87171; }
@@ -489,20 +117,9 @@
         .feedback-msg.lava-warning { color: #fb923c; font-weight: 600; animation: lavaWarning 0.5s ease-in-out infinite alternate; }
         .feedback-msg.heart-loss { color: #fbbf24; font-weight: 600; }
         @keyframes lavaWarning { 0% { opacity: 0.6; transform: scale(1); } 100% { opacity: 1; transform: scale(1.02); } }
-
-        .game-over-overlay {
-            position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px); display: none; align-items: center;
-            justify-content: center; z-index: 20; border-radius: 20px;
-            flex-direction: column; padding: 24px; animation: fadeIn 0.5s ease;
-        }
+        .game-over-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 20; border-radius: 20px; flex-direction: column; padding: 24px; animation: fadeIn 0.5s ease; }
         .game-over-overlay.show { display: flex; }
-
-        .game-over-box {
-            background: #1e293b; padding: 32px 40px; border-radius: 28px;
-            text-align: center; max-width: 400px; width: 100%;
-            border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-        }
+        .game-over-box { background: #1e293b; padding: 32px 40px; border-radius: 28px; text-align: center; max-width: 400px; width: 100%; border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); }
         .game-over-box h2 { font-size: 2rem; font-weight: 700; color: #f87171; margin-bottom: 4px; }
         .game-over-box .sub { color: #94a3b8; font-size: 1rem; margin-bottom: 16px; }
         .game-over-box .big-score { font-size: 3.2rem; font-weight: 700; color: #fbbf24; line-height: 1.2; }
@@ -510,45 +127,15 @@
         .game-over-box .divider { border: none; border-top: 1px solid #334155; margin: 16px 0; }
         .game-over-box .btn-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
         .game-over-box .btn-group .btn { flex: 1; min-width: 100px; padding: 12px 20px; }
-
         .stats-extra { display: flex; justify-content: center; gap: 20px; color: #94a3b8; font-size: 0.9rem; flex-wrap: wrap; }
         .stats-extra span { display: flex; align-items: center; gap: 4px; }
         .stats-extra .num { font-weight: 600; color: #e2e8f0; }
-
-        @media (max-width: 600px) {
-            .game-wrapper { padding: 12px; }
-            .question-row .q-label { font-size: 1.2rem; }
-            .question-row .q-hint { font-size: 0.7rem; padding: 2px 10px; }
-            .input-row input { font-size: 1rem; padding: 12px 16px; min-width: 100px; }
-            .input-row .btn { padding: 12px 16px; font-size: 0.9rem; }
-            .game-over-box { padding: 24px 20px; }
-            .game-over-box .big-score { font-size: 2.4rem; }
-            .stats-row { gap: 12px; font-size: 0.8rem; }
-            .popup-box { padding: 24px 20px; }
-            .popup-box h2 { font-size: 1.4rem; }
-            #userLoginForm .btn { font-size: 0.85rem; padding: 8px 14px; }
-            .leaderboard-tab { font-size: 0.75rem; padding: 6px 12px; }
-            .leaderboard-item { padding: 10px 12px; gap: 8px; }
-            .leaderboard-rank { font-size: 1.2rem; min-width: 32px; }
-            .leaderboard-value { font-size: 1.1rem; }
-        }
-
-        @media (max-width: 400px) {
-            .question-row { flex-direction: column; align-items: flex-start; gap: 6px; }
-            .question-row .q-hint { white-space: normal; }
-            .input-row { flex-direction: column; align-items: stretch; }
-            .input-row input { min-width: unset; }
-            .input-row .btn { width: 100%; }
-            .popup-box .btn-group .btn { min-width: 80px; font-size: 0.85rem; }
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0b1220; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 12px; }
+        @media (max-width: 600px) { .game-wrapper { padding: 12px; } .question-row .q-label { font-size: 1.2rem; } .question-row .q-hint { font-size: 0.7rem; padding: 2px 10px; } .input-row input { font-size: 1rem; padding: 12px 16px; min-width: 100px; } .input-row .btn { padding: 12px 16px; font-size: 0.9rem; } .game-over-box { padding: 24px 20px; } .game-over-box .big-score { font-size: 2.4rem; } .stats-row { gap: 12px; font-size: 0.8rem; } .popup-box { padding: 24px 20px; } .popup-box h2 { font-size: 1.4rem; } #userLoginForm .btn { font-size: 0.85rem; padding: 8px 14px; } .leaderboard-tab { font-size: 0.75rem; padding: 6px 12px; } .leaderboard-item { padding: 10px 12px; gap: 8px; } .leaderboard-rank { font-size: 1.2rem; min-width: 32px; } .leaderboard-value { font-size: 1.1rem; } }
+        @media (max-width: 400px) { .question-row { flex-direction: column; align-items: flex-start; gap: 6px; } .question-row .q-hint { white-space: normal; } .input-row { flex-direction: column; align-items: stretch; } .input-row input { min-width: unset; } .input-row .btn { width: 100%; } .popup-box .btn-group .btn { min-width: 80px; font-size: 0.85rem; } }
+        ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #0b1220; } ::-webkit-scrollbar-thumb { background: #334155; border-radius: 12px; }
     </style>
 </head>
 <body>
-
     <div id="appContainer">
         <div id="userSystem">
             <div id="userLoginForm">
@@ -575,17 +162,13 @@
                 <p class="subtitle">Teken in om jou vordering te stoor</p>
                 <div class="input-group">
                     <label>👤 Gebruikersnaam</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="loginUsername" placeholder="Jou gebruikersnaam" 
-                               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
-                    </div>
+                    <div class="input-wrapper"><input type="text" id="loginUsername" placeholder="Jou gebruikersnaam" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" /></div>
                 </div>
                 <div class="input-group">
                     <label>🔑 Wagwoord</label>
                     <div class="input-wrapper">
-                        <input type="password" id="loginPassword" placeholder="Jou wagwoord" 
-                               autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
-                        <button class="toggle-password" onclick="togglePassword('loginPassword', this)" aria-label="Wys wagwoord">👁️</button>
+                        <input type="password" id="loginPassword" placeholder="Jou wagwoord" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <button class="toggle-password" onclick="togglePassword('loginPassword', this)" aria-label="Wys wagwoord">️</button>
                     </div>
                 </div>
                 <div class="error-msg" id="loginError"></div>
@@ -604,30 +187,25 @@
                 <p class="subtitle">Skep 'n nuwe gebruiker om jou vordering te stoor</p>
                 <div class="input-group">
                     <label>👤 Kies 'n gebruikersnaam</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="registerUsername" placeholder="Minstens 3 karakters" 
-                               autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" />
-                    </div>
+                    <div class="input-wrapper"><input type="text" id="registerUsername" placeholder="Minstens 3 karakters" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" /></div>
                 </div>
                 <div class="input-group">
                     <label>🔑 Kies 'n wagwoord</label>
                     <div class="input-wrapper">
-                        <input type="password" id="registerPassword" placeholder="Minstens 4 karakters" 
-                               autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <input type="password" id="registerPassword" placeholder="Minstens 4 karakters" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
                         <button class="toggle-password" onclick="togglePassword('registerPassword', this)" aria-label="Wys wagwoord">👁️</button>
                     </div>
                 </div>
                 <div class="input-group">
-                    <label>🔑 Bevestig wagwoord</label>
+                    <label> Bevestig wagwoord</label>
                     <div class="input-wrapper">
-                        <input type="password" id="registerConfirmPassword" placeholder="Tik wagwoord weer" 
-                               autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                        <input type="password" id="registerConfirmPassword" placeholder="Tik wagwoord weer" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false" />
                         <button class="toggle-password" onclick="togglePassword('registerConfirmPassword', this)" aria-label="Wys wagwoord">👁️</button>
                     </div>
                 </div>
                 <div class="error-msg" id="registerError"></div>
                 <div class="btn-group">
-                    <button class="btn btn-success" id="registerSubmitBtn"><span class="btn-text">📝 Registreer</span></button>
+                    <button class="btn btn-success" id="registerSubmitBtn"><span class="btn-text"> Registreer</span></button>
                     <button class="btn btn-secondary" id="registerCancelBtn">Kanselleer</button>
                 </div>
                 <div class="switch-action">Het jy reeds 'n gebruiker? <a id="switchToLogin">Teken in hier</a></div>
@@ -662,7 +240,7 @@
                         <div class="stats-extra">
                             <span>📦 <span class="num" id="finalBlocks">0</span> blokke</span>
                             <span>🔥 <span class="num" id="finalStreak">0</span> reeks</span>
-                            <span>🏔️ <span class="num" id="finalBestHeight">0</span> beste</span>
+                            <span>️ <span class="num" id="finalBestHeight">0</span> beste</span>
                         </div>
                         <div class="btn-group">
                             <button class="btn btn-primary" onclick="restartGame()">🔄 Probeer weer</button>
@@ -677,16 +255,15 @@
                     <span class="q-hint" id="qHint">📝 tik die naam</span>
                 </div>
                 <div class="input-row">
-                    <input type="text" id="answerInput" placeholder="Skryf jou antwoord..." 
-                           autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
+                    <input type="text" id="answerInput" placeholder="Skryf jou antwoord..." autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     <button class="btn btn-primary" id="submitBtn">⏎ Submit</button>
                     <button class="btn btn-lava" id="lavaBtn">🌋 Lava Mode</button>
                 </div>
-                <div class="feedback-msg info" id="feedbackMsg">💡 Tik jou antwoord en druk Enter</div>
+                <div class="feedback-msg info" id="feedbackMsg"> Tik jou antwoord en druk Enter</div>
                 <div class="stats-row">
                     <span>✅ Korrek: <span class="num green" id="scoreDisplay">0</span></span>
                     <span>🔥 Reeks: <span class="num gold" id="streakDisplay">0</span></span>
-                    <span>📦 Hoogte: <span class="num blue" id="heightDisplay">3</span></span>
+                    <span> Hoogte: <span class="num blue" id="heightDisplay">3</span></span>
                     <span>🏔️ Beste: <span class="num purple" id="bestHeightDisplay">3</span></span>
                     <span id="lavaStatus" style="display:none;">🌋 <span class="num lava" id="lavaLevelDisplay">0</span></span>
                 </div>
@@ -696,178 +273,54 @@
 
     <script>
         // ================================================================
-        //   HULP-FUNKSIES VIR UI
+        //   SUPABASE CONFIGURATION
+        // ================================================================
+        const SUPABASE_URL = 'https://akbsemgalxsfmpnbfzbm.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_y0RhIwDsXUCK46Xrf9t7xw_9EXUh3Db';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ================================================================
+        //   HELPER FUNCTIONS FOR UI
         // ================================================================
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-            }
+            if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; } 
+            else { input.type = 'password'; btn.textContent = '👁️'; }
         }
 
         function setLoading(btnId, isLoading, originalText) {
             const btn = document.getElementById(btnId);
             if (isLoading) {
-                btn.classList.add('btn-loading');
-                btn.disabled = true;
+                btn.classList.add('btn-loading'); btn.disabled = true;
                 btn.innerHTML = '<div class="spinner"></div> Besig...';
             } else {
-                btn.classList.remove('btn-loading');
-                btn.disabled = false;
+                btn.classList.remove('btn-loading'); btn.disabled = false;
                 btn.innerHTML = `<span class="btn-text">${originalText}</span>`;
             }
         }
 
         function showError(elementId, message, boxId = null) {
             const errorEl = document.getElementById(elementId);
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
+            errorEl.textContent = message; errorEl.classList.add('show');
             if (boxId) {
                 const box = document.getElementById(boxId);
-                box.classList.remove('shake');
-                void box.offsetWidth;
-                box.classList.add('shake');
+                box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
             }
         }
 
         function clearError(elementId) {
             const errorEl = document.getElementById(elementId);
-            errorEl.textContent = '';
-            errorEl.classList.remove('show');
+            errorEl.textContent = ''; errorEl.classList.remove('show');
         }
 
         // ================================================================
-        //   GEBRUIKER STELSEL MET PERSISTENTE DATA-STOOR
+        //   USER SYSTEM WITH SUPABASE
         // ================================================================
         class UserSystem {
             constructor() {
-                // BELANGRIK: Stel storageKey EERSTE voordat loadAllUsers() geroep word
-                this.storageKey = 'chemieUsers_v5';
                 this.currentUser = null;
-                this.users = this.loadAllUsers();
-                this.lastSaved = null;
-                
-                console.log('📦 UserSystem geïnisialiseer met', Object.keys(this.users).length, 'gebruikers');
-            }
-
-            loadAllUsers() {
-                try {
-                    const data = localStorage.getItem(this.storageKey);
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        console.log('✅ Gebruikersdata suksesvol gelaai vanaf localStorage');
-                        return parsed;
-                    }
-                    console.log('ℹ️ Geen bestaande gebruikersdata gevind nie');
-                } catch (e) {
-                    console.error('❌ Fout met laai van gebruikersdata:', e);
-                }
-                return {};
-            }
-
-            saveAllUsers() {
-                try {
-                    const dataToSave = JSON.stringify(this.users);
-                    localStorage.setItem(this.storageKey, dataToSave);
-                    this.lastSaved = new Date().toISOString();
-                    console.log('✅ Gebruikersdata suksesvol gestoor na localStorage om', this.lastSaved);
-                    console.log('📊 Data grootte:', (dataToSave.length / 1024).toFixed(2), 'KB');
-                    return true;
-                } catch (e) {
-                    console.error('❌ Fout met stoor van gebruikersdata:', e);
-                    return false;
-                }
-            }
-
-            register(username, password, confirmPassword) {
-                const trimmedUser = username.trim();
-                const cleanUser = trimmedUser.toLowerCase();
-                
-                if (this.users[cleanUser]) {
-                    return { 
-                        success: false, 
-                        message: `❌ Gebruikersnaam "${this.users[cleanUser].displayName}" bestaan reeds!` 
-                    };
-                }
-                
-                if (trimmedUser.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
-                if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
-                if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
-
-                this.users[cleanUser] = {
-                    displayName: trimmedUser,
-                    password: this.hashPassword(password),
-                    stats: this.getDefaultStats(),
-                    created: new Date().toISOString(),
-                    lastLogin: new Date().toISOString(),
-                };
-                
-                const saved = this.saveAllUsers();
-                if (saved) {
-                    return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
-                } else {
-                    return { success: false, message: '❌ Kon nie data stoor nie!' };
-                }
-            }
-
-            login(username, password) {
-                const cleanUser = username.trim().toLowerCase();
-                const user = this.users[cleanUser];
-                
-                if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
-                if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
-
-                user.lastLogin = new Date().toISOString();
-                this.saveAllUsers();
-                this.currentUser = cleanUser;
-                
-                // Gebruik localStorage vir persistent session (oorleef refresh)
-                localStorage.setItem('chemieCurrentUser', cleanUser);
-                
-                const displayName = user.displayName || cleanUser;
-                return { success: true, message: `✅ Welkom terug, ${displayName}!` };
-            }
-
-            logout() {
-                this.currentUser = null;
-                localStorage.removeItem('chemieCurrentUser');
-                return { success: true, message: '👋 Jy is uitgeteken!' };
-            }
-
-            getUserStats() {
-                if (!this.currentUser) return null;
-                return this.users[this.currentUser]?.stats || null;
-            }
-
-            getDisplayName() {
-                if (!this.currentUser) return null;
-                const user = this.users[this.currentUser];
-                return user?.displayName || this.currentUser;
-            }
-
-            updateUserStats(newStats) {
-                if (!this.currentUser) return false;
-                const user = this.users[this.currentUser];
-                if (!user) return false;
-                user.stats = { ...user.stats, ...newStats };
-                return this.saveAllUsers();
-            }
-
-            getDefaultStats() {
-                return {
-                    totalCorrect: 0,
-                    totalWrong: 0,
-                    bestStreak: 0,
-                    bestHeight: 3,
-                    gamesPlayed: 0,
-                    lavaModeUsed: 0,
-                    totalBlocksStacked: 0,
-                    lastPlayed: new Date().toISOString(),
-                };
+                this.storageKey = 'chemieUsers_v5'; // Fallback localStorage key
             }
 
             hashPassword(password) {
@@ -880,20 +333,248 @@
                 return hash.toString(36);
             }
 
-            getLeaderboard(sortBy = 'bestHeight', limit = 50) {
-                const entries = Object.entries(this.users).map(([username, data]) => ({
-                    username: data.displayName || username,
-                    stats: data.stats || this.getDefaultStats(),
-                    lastLogin: data.lastLogin,
-                }));
+            getDefaultStats() {
+                return {
+                    totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestHeight: 3,
+                    gamesPlayed: 0, lavaModeUsed: 0, totalBlocksStacked: 0,
+                    lastPlayed: new Date().toISOString(),
+                };
+            }
 
-                entries.sort((a, b) => {
-                    const valA = a.stats[sortBy] || 0;
-                    const valB = b.stats[sortBy] || 0;
-                    return valB - valA;
-                });
+            async register(username, password, confirmPassword) {
+                const trimmedUser = username.trim();
+                const cleanUser = trimmedUser.toLowerCase();
+                
+                if (trimmedUser.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
+                if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
+                if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
-                return entries.slice(0, limit);
+                try {
+                    // Check if user exists in Supabase
+                    const { data: existing } = await supabase
+                        .from('users')
+                        .select('username')
+                        .eq('username', cleanUser)
+                        .single();
+
+                    if (existing) {
+                        return { success: false, message: `❌ Gebruikersnaam "${trimmedUser}" bestaan reeds!` };
+                    }
+
+                    // Insert new user into Supabase
+                    const { error } = await supabase
+                        .from('users')
+                        .insert({
+                            username: cleanUser,
+                            password_hash: this.hashPassword(password),
+                            stats: this.getDefaultStats(),
+                            last_login: new Date().toISOString()
+                        });
+
+                    if (error) throw error;
+
+                    // Also save to localStorage as backup
+                    this.saveToLocalStorage(cleanUser, trimmedUser, password);
+
+                    return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+                } catch (err) {
+                    console.error('Registration error:', err);
+                    return { success: false, message: '❌ Kon nie registreer nie. Probeer weer.' };
+                }
+            }
+
+            async login(username, password) {
+                const cleanUser = username.trim().toLowerCase();
+
+                try {
+                    // Try to fetch from Supabase first
+                    const { data: user, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('username', cleanUser)
+                        .single();
+
+                    if (error || !user) {
+                        // Fallback to localStorage
+                        return this.loginFromLocalStorage(cleanUser, password);
+                    }
+
+                    if (this.hashPassword(password) !== user.password_hash) {
+                        return { success: false, message: '❌ Verkeerde wagwoord!' };
+                    }
+
+                    // Update last login
+                    await supabase
+                        .from('users')
+                        .update({ last_login: new Date().toISOString() })
+                        .eq('username', cleanUser);
+
+                    this.currentUser = cleanUser;
+                    localStorage.setItem('chemieCurrentUser', cleanUser);
+                    
+                    const displayName = user.username;
+                    return { success: true, message: `✅ Welkom terug, ${displayName}!`, userData: user };
+                } catch (err) {
+                    console.error('Login error:', err);
+                    return this.loginFromLocalStorage(cleanUser, password);
+                }
+            }
+
+            loginFromLocalStorage(cleanUser, password) {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    if (!data) return { success: false, message: '❌ Gebruiker nie gevind nie!' };
+                    
+                    const users = JSON.parse(data);
+                    const user = users[cleanUser];
+                    
+                    if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
+                    if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
+
+                    user.lastLogin = new Date().toISOString();
+                    localStorage.setItem(this.storageKey, JSON.stringify(users));
+                    this.currentUser = cleanUser;
+                    localStorage.setItem('chemieCurrentUser', cleanUser);
+                    
+                    return { success: true, message: `✅ Welkom terug, ${user.displayName}!`, userData: user };
+                } catch (err) {
+                    return { success: false, message: '❌ Kon nie inteken nie.' };
+                }
+            }
+
+            saveToLocalStorage(username, displayName, password) {
+                try {
+                    let users = {};
+                    const data = localStorage.getItem(this.storageKey);
+                    if (data) users = JSON.parse(data);
+                    
+                    users[username] = {
+                        displayName: displayName,
+                        password: this.hashPassword(password),
+                        stats: this.getDefaultStats(),
+                        created: new Date().toISOString(),
+                        lastLogin: new Date().toISOString(),
+                    };
+                    
+                    localStorage.setItem(this.storageKey, JSON.stringify(users));
+                } catch (err) {
+                    console.error('LocalStorage save error:', err);
+                }
+            }
+
+            logout() {
+                this.currentUser = null;
+                localStorage.removeItem('chemieCurrentUser');
+                return { success: true, message: '👋 Jy is uitgeteken!' };
+            }
+
+            async getUserStats() {
+                if (!this.currentUser) return null;
+                
+                try {
+                    const { data: user } = await supabase
+                        .from('users')
+                        .select('stats')
+                        .eq('username', this.currentUser)
+                        .single();
+                    
+                    if (user && user.stats) return user.stats;
+                } catch (err) {
+                    console.error('Get stats error:', err);
+                }
+                
+                // Fallback to localStorage
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    if (data) {
+                        const users = JSON.parse(data);
+                        return users[this.currentUser]?.stats || null;
+                    }
+                } catch (err) {}
+                
+                return null;
+            }
+
+            getDisplayName() {
+                if (!this.currentUser) return null;
+                return this.currentUser;
+            }
+
+            async updateUserStats(newStats) {
+                if (!this.currentUser) return false;
+                
+                try {
+                    // Update in Supabase
+                    const { error } = await supabase
+                        .from('users')
+                        .update({ stats: newStats })
+                        .eq('username', this.currentUser);
+                    
+                    if (error) throw error;
+                    
+                    // Also update localStorage as backup
+                    try {
+                        const data = localStorage.getItem(this.storageKey);
+                        if (data) {
+                            const users = JSON.parse(data);
+                            if (users[this.currentUser]) {
+                                users[this.currentUser].stats = newStats;
+                                localStorage.setItem(this.storageKey, JSON.stringify(users));
+                            }
+                        }
+                    } catch (err) {}
+                    
+                    return true;
+                } catch (err) {
+                    console.error('Update stats error:', err);
+                    return false;
+                }
+            }
+
+            async getLeaderboard(sortBy = 'bestHeight', limit = 50) {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('username, stats, last_login')
+                        .order(sortBy, { ascending: false })
+                        .limit(limit);
+                    
+                    if (error) throw error;
+                    
+                    return (data || []).map(entry => ({
+                        username: entry.username,
+                        stats: entry.stats || this.getDefaultStats(),
+                        lastLogin: entry.last_login,
+                    }));
+                } catch (err) {
+                    console.error('Leaderboard error:', err);
+                    // Fallback to localStorage
+                    return this.getLeaderboardFromLocalStorage(sortBy, limit);
+                }
+            }
+
+            getLeaderboardFromLocalStorage(sortBy, limit) {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    if (!data) return [];
+                    
+                    const users = JSON.parse(data);
+                    const entries = Object.entries(users).map(([username, userData]) => ({
+                        username: userData.displayName || username,
+                        stats: userData.stats || this.getDefaultStats(),
+                        lastLogin: userData.lastLogin,
+                    }));
+                    
+                    entries.sort((a, b) => {
+                        const valA = a.stats[sortBy] || 0;
+                        const valB = b.stats[sortBy] || 0;
+                        return valB - valA;
+                    });
+                    
+                    return entries.slice(0, limit);
+                } catch (err) {
+                    return [];
+                }
             }
         }
 
@@ -934,36 +615,42 @@
 
         function renderLeaderboard(sortBy) {
             const list = document.getElementById('leaderboardList');
-            const leaderboard = userSystem.getLeaderboard(sortBy, 50);
+            
+            // Show loading state
+            list.innerHTML = '<div class="leaderboard-empty">⏳ Laai ranglys...</div>';
+            
+            userSystem.getLeaderboard(sortBy, 50).then(leaderboard => {
+                if (leaderboard.length === 0) {
+                    list.innerHTML = '<div class="leaderboard-empty">🎮 Geen spelers nog nie.<br>Speel om op die ranglys te verskyn!</div>';
+                    return;
+                }
 
-            if (leaderboard.length === 0) {
-                list.innerHTML = '<div class="leaderboard-empty">🎮 Geen spelers nog nie.<br>Speel om op die ranglys te verskyn!</div>';
-                return;
-            }
+                let html = '';
+                leaderboard.forEach((entry, index) => {
+                    const rank = index + 1;
+                    const isCurrentUser = userSystem.currentUser === entry.username.toLowerCase();
+                    const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
+                    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+                    
+                    const value = entry.stats[sortBy] || 0;
+                    const lastPlayed = entry.lastLogin ? new Date(entry.lastLogin).toLocaleDateString('af-ZA') : 'Onbekend';
 
-            let html = '';
-            leaderboard.forEach((entry, index) => {
-                const rank = index + 1;
-                const isCurrentUser = userSystem.currentUser === entry.username.toLowerCase();
-                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
-                const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
-                
-                const value = entry.stats[sortBy] || 0;
-                const lastPlayed = new Date(entry.lastLogin).toLocaleDateString('af-ZA');
-
-                html += `
-                    <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
-                        <div class="leaderboard-rank ${rankClass}">${medal}</div>
-                        <div class="leaderboard-info">
-                            <div class="leaderboard-name">${entry.username} ${isCurrentUser ? '(Jy)' : ''}</div>
-                            <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
+                    html += `
+                        <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
+                            <div class="leaderboard-rank ${rankClass}">${medal}</div>
+                            <div class="leaderboard-info">
+                                <div class="leaderboard-name">${entry.username} ${isCurrentUser ? '(Jy)' : ''}</div>
+                                <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
+                            </div>
+                            <div class="leaderboard-value">${value}</div>
                         </div>
-                        <div class="leaderboard-value">${value}</div>
-                    </div>
-                `;
-            });
+                    `;
+                });
 
-            list.innerHTML = html;
+                list.innerHTML = html;
+            }).catch(err => {
+                list.innerHTML = '<div class="leaderboard-empty">❌ Kon nie ranglys laai nie.</div>';
+            });
         }
 
         function updateUserUI() {
@@ -975,7 +662,6 @@
             const app = document.getElementById('app');
 
             if (userSystem.currentUser) {
-                const stats = userSystem.getUserStats();
                 const displayName = userSystem.getDisplayName();
                 currentUserDisplay.innerHTML = `👤 <strong style="color:#60a5fa;">${displayName}</strong>`;
                 showLoginBtn.style.display = 'none';
@@ -983,11 +669,16 @@
                 logoutBtn.style.display = 'inline-block';
                 userStatsDisplay.style.display = 'flex';
                 app.classList.remove('disabled');
-
-                document.getElementById('userTotalCorrect').textContent = stats?.totalCorrect || 0;
-                document.getElementById('userBestStreak').textContent = stats?.bestStreak || 0;
-                document.getElementById('userTotalBlocks').textContent = stats?.totalBlocksStacked || 0;
-                document.getElementById('userGamesPlayed').textContent = stats?.gamesPlayed || 0;
+                
+                // Load stats asynchronously
+                userSystem.getUserStats().then(stats => {
+                    if (stats) {
+                        document.getElementById('userTotalCorrect').textContent = stats.totalCorrect || 0;
+                        document.getElementById('userBestStreak').textContent = stats.bestStreak || 0;
+                        document.getElementById('userTotalBlocks').textContent = stats.totalBlocksStacked || 0;
+                        document.getElementById('userGamesPlayed').textContent = stats.gamesPlayed || 0;
+                    }
+                });
             } else {
                 currentUserDisplay.innerHTML = '👤 Nie ingeteken nie';
                 showLoginBtn.style.display = 'inline-block';
@@ -1030,8 +721,9 @@
                 return;
             }
             setLoading('loginSubmitBtn', true, '🔓 Teken In');
-            await new Promise(r => setTimeout(r, 400));
-            const result = userSystem.login(username, password);
+            
+            const result = await userSystem.login(username, password);
+            
             if (result.success) {
                 clearError('loginError');
                 hideLoginPopup();
@@ -1057,12 +749,13 @@
                 return;
             }
             setLoading('registerSubmitBtn', true, '📝 Registreer');
-            await new Promise(r => setTimeout(r, 400));
-            const result = userSystem.register(username, password, confirmPassword);
+            
+            const result = await userSystem.register(username, password, confirmPassword);
+            
             if (result.success) {
                 clearError('registerError');
                 hideRegisterPopup();
-                const loginResult = userSystem.login(username, password);
+                const loginResult = await userSystem.login(username, password);
                 if (loginResult.success) {
                     updateUserUI();
                     loadUserStatsIntoGame();
@@ -1104,28 +797,29 @@
 
         function loadUserStatsIntoGame() {
             if (!userSystem.currentUser) return;
-            const stats = userSystem.getUserStats();
-            if (!stats) return;
-            if (typeof window.updateBestHeightFromUser === 'function') window.updateBestHeightFromUser(stats.bestHeight || 3);
-            const tc = document.getElementById('userTotalCorrect');
-            const bs = document.getElementById('userBestStreak');
-            const gp = document.getElementById('userGamesPlayed');
-            if (tc) tc.textContent = stats.totalCorrect || 0;
-            if (bs) bs.textContent = stats.bestStreak || 0;
-            if (gp) gp.textContent = stats.gamesPlayed || 0;
+            userSystem.getUserStats().then(stats => {
+                if (!stats) return;
+                if (typeof window.updateBestHeightFromUser === 'function') window.updateBestHeightFromUser(stats.bestHeight || 3);
+                const tc = document.getElementById('userTotalCorrect');
+                const bs = document.getElementById('userBestStreak');
+                const gp = document.getElementById('userGamesPlayed');
+                if (tc) tc.textContent = stats.totalCorrect || 0;
+                if (bs) bs.textContent = stats.bestStreak || 0;
+                if (gp) gp.textContent = stats.gamesPlayed || 0;
+            });
         }
 
         // ================================================================
-        //   CHEMIE VRAAGBANK
+        //   CHEMISTRY QUESTION BANK
         // ================================================================
         const CHEM_BANK = [
             { display: "OH⁻", answer: "OH(-1)", name: "hidroksiedioon" },
-            { display: "NO₃⁻", answer: "NO3(-1)", name: "nitraatioon" },
+            { display: "NO₃", answer: "NO3(-1)", name: "nitraatioon" },
             { display: "NO₂⁻", answer: "NO2(-1)", name: "nitrietioon" },
             { display: "MnO₄⁻", answer: "MnO4(-1)", name: "permanganaatioon" },
             { display: "ClO₃⁻", answer: "ClO3(-1)", name: "chloraatioon" },
             { display: "CH₃COO⁻", answer: "CH3COO(-1)", name: "asetaatioon" },
-            { display: "HCO₃⁻", answer: "HCO3(-1)", name: "waterstofkarbonaatioon" },
+            { display: "HCO₃", answer: "HCO3(-1)", name: "waterstofkarbonaatioon" },
             { display: "HSO₃⁻", answer: "HSO3(-1)", name: "waterstofsulfietioon" },
             { display: "HSO₄⁻", answer: "HSO4(-1)", name: "waterstofsulfaatioon" },
             { display: "SO₄²⁻", answer: "SO4(-2)", name: "sulfaatioon" },
@@ -1208,12 +902,13 @@
                 bestHeight = current;
                 saveBestHeight();
                 if (userSystem.currentUser) {
-                    const stats = userSystem.getUserStats();
-                    if (stats && current > (stats.bestHeight || 0)) {
-                        stats.bestHeight = current;
-                        userSystem.updateUserStats(stats);
-                        updateUserUI();
-                    }
+                    userSystem.getUserStats().then(stats => {
+                        if (stats && current > (stats.bestHeight || 0)) {
+                            stats.bestHeight = current;
+                            userSystem.updateUserStats(stats);
+                            updateUserUI();
+                        }
+                    });
                 }
             }
             bestHeightDisplay.textContent = bestHeight;
@@ -1246,14 +941,15 @@
 
             loadBestHeight();
             if (userSystem.currentUser) {
-                const stats = userSystem.getUserStats();
-                if (stats && stats.bestHeight > bestHeight) {
-                    bestHeight = stats.bestHeight;
-                    saveBestHeight();
-                }
-                stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
-                userSystem.updateUserStats(stats);
-                updateUserUI();
+                userSystem.getUserStats().then(stats => {
+                    if (stats && stats.bestHeight > bestHeight) {
+                        bestHeight = stats.bestHeight;
+                        saveBestHeight();
+                    }
+                    stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
+                    userSystem.updateUserStats(stats);
+                    updateUserUI();
+                });
             }
 
             if (resetLava) { lavaLevel = GROUND_Y; lavaTime = 0; lavaBubbles = []; lavaSpeed = 0.05; }
@@ -1315,13 +1011,14 @@
             }
 
             if (userSystem.currentUser) {
-                const stats = userSystem.getUserStats();
-                if (stats) {
-                    document.getElementById('userTotalCorrect').textContent = stats.totalCorrect || 0;
-                    document.getElementById('userBestStreak').textContent = stats.bestStreak || 0;
-                    document.getElementById('userTotalBlocks').textContent = stats.totalBlocksStacked || 0;
-                    document.getElementById('userGamesPlayed').textContent = stats.gamesPlayed || 0;
-                }
+                userSystem.getUserStats().then(stats => {
+                    if (stats) {
+                        document.getElementById('userTotalCorrect').textContent = stats.totalCorrect || 0;
+                        document.getElementById('userBestStreak').textContent = stats.bestStreak || 0;
+                        document.getElementById('userTotalBlocks').textContent = stats.totalBlocksStacked || 0;
+                        document.getElementById('userGamesPlayed').textContent = stats.gamesPlayed || 0;
+                    }
+                });
             }
         }
 
@@ -1380,15 +1077,16 @@
                 }
 
                 if (userSystem.currentUser) {
-                    const stats = userSystem.getUserStats();
-                    if (stats) {
-                        stats.totalCorrect = (stats.totalCorrect || 0) + 1;
-                        stats.totalBlocksStacked = (stats.totalBlocksStacked || 0) + 1;
-                        if (streak > (stats.bestStreak || 0)) stats.bestStreak = streak;
-                        if (stack.length > (stats.bestHeight || 0)) stats.bestHeight = stack.length;
-                        userSystem.updateUserStats(stats);
-                        updateUserUI();
-                    }
+                    userSystem.getUserStats().then(stats => {
+                        if (stats) {
+                            stats.totalCorrect = (stats.totalCorrect || 0) + 1;
+                            stats.totalBlocksStacked = (stats.totalBlocksStacked || 0) + 1;
+                            if (streak > (stats.bestStreak || 0)) stats.bestStreak = streak;
+                            if (stack.length > (stats.bestHeight || 0)) stats.bestHeight = stack.length;
+                            userSystem.updateUserStats(stats);
+                            updateUserUI();
+                        }
+                    });
                 }
 
                 answerInput.disabled = true;
@@ -1405,12 +1103,13 @@
 
             } else {
                 if (userSystem.currentUser) {
-                    const stats = userSystem.getUserStats();
-                    if (stats) {
-                        stats.totalWrong = (stats.totalWrong || 0) + 1;
-                        userSystem.updateUserStats(stats);
-                        updateUserUI();
-                    }
+                    userSystem.getUserStats().then(stats => {
+                        if (stats) {
+                            stats.totalWrong = (stats.totalWrong || 0) + 1;
+                            userSystem.updateUserStats(stats);
+                            updateUserUI();
+                        }
+                    });
                 }
 
                 if (isLavaMode) {
@@ -1548,7 +1247,7 @@
             lavaWarningActive = (distToChar < 4 && distToChar > 0);
             if (lavaWarningActive) {
                 feedbackMsg.className = 'feedback-msg lava-warning';
-                feedbackMsg.textContent = `🌋 WAARSKUWING! Lava is ${Math.round(distToChar)} blokke weg! ❤️ × ${lives}`;
+                feedbackMsg.textContent = ` WAARSKUWING! Lava is ${Math.round(distToChar)} blokke weg! ❤️ × ${lives}`;
             }
             updateStats();
         }
@@ -1825,7 +1524,7 @@
             else if (lvl >= 16) { statusText = 'Hoog in die lug'; emoji = '☁️'; statusColor = '#60a5fa'; }
             else if (lvl >= 11) { statusText = 'Bo die wolke'; emoji = '☁️'; statusColor = '#fbbf24'; }
             
-            if (isLavaMode) { statusText = '🌋 ' + statusText; statusColor = '#fb923c'; }
+            if (isLavaMode) { statusText = ' ' + statusText; statusColor = '#fb923c'; }
             
             ctx.fillStyle = statusColor;
             ctx.font = 'bold 13px "Segoe UI",sans-serif';
@@ -2270,7 +1969,7 @@
         function toggleLavaMode() {
             isLavaMode = !isLavaMode;
             if (isLavaMode) {
-                lavaBtn.textContent = '🌋 Lava: AAN';
+                lavaBtn.textContent = ' Lava: AAN';
                 lavaBtn.classList.add('active');
                 lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaTime = 0; lavaBubbles = [];
                 if (animFrame) cancelAnimationFrame(animFrame);
@@ -2334,12 +2033,11 @@
         canvas.addEventListener('click', () => { if (!isGameOver) answerInput.focus(); });
 
         // ================================================================
-        //   SESSION HERSTEL - Gebruik localStorage vir persistent session
+        //   SESSION RESTORE
         // ================================================================
         function checkSession() {
-            // Gebruik localStorage in plaas van sessionStorage vir persistent session
             const savedUser = localStorage.getItem('chemieCurrentUser');
-            if (savedUser && userSystem.users[savedUser]) {
+            if (savedUser) {
                 userSystem.currentUser = savedUser;
                 updateUserUI();
                 loadUserStatsIntoGame();
@@ -2352,18 +2050,17 @@
         }
 
         // ================================================================
-        //   INITIALISASIE
+        //   INITIALIZATION
         // ================================================================
-        console.log('🎮 Blok Stapel Chemie word gelaai...');
-        console.log('📦 localStorage sleutel:', userSystem.storageKey);
-        console.log('👤 Geregistreerde gebruikers:', Object.keys(userSystem.users).length);
+        console.log(' Blok Stapel Chemie word gelaai...');
+        console.log('🔗 Supabase URL:', SUPABASE_URL);
         
         loadBestHeight();
         initGame(true);
         gameLoop();
         answerInput.focus();
         
-        // Herstel session na 'n kort vertraging
+        // Restore session after a short delay
         setTimeout(checkSession, 200);
 
         console.log('✅ Blok Stapel Chemie suksesvol gelaai!');
