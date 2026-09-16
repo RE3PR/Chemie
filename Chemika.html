@@ -847,9 +847,20 @@ body {
 *    CREATE POLICY "Allow public insert" ON users FOR INSERT WITH CHECK (true);
 *    CREATE POLICY "Allow public update" ON users FOR UPDATE USING (true);
 *
-* 4. Vervang 'YOUR_SUPABASE_URL' en 'YOUR_SUPABASE_ANON_KEY' hieronder.
+* 4. Vervang die SUPABASE_CONFIG hieronder met jou eie URL en ANON KEY.
 * =====================================================================
 */
+
+// ================================================================
+//   SUPABASE KONFIGURASIE
+//   Laat LEEG om net localStorage te gebruik (ranglys werk dan
+//   net op HIERDIE toestel/browser). Vul in vir 'n GLOBALE ranglys.
+// ================================================================
+const SUPABASE_CONFIG = {
+  url: '',        // bv. 'https://xyzcompany.supabase.co'
+  anonKey: ''     // bv. 'eyJhbGciOi...'
+};
+
 // ================================================================
 //   HULP-FUNKSIES VIR UI
 // ================================================================
@@ -906,26 +917,27 @@ class UserSystem {
   constructor() {
     this.currentUser = null;
     this.currentUserData = null;
-    this.useSupabase = false;
     this.supabase = null;
+    this.useSupabase = false;
     this.storageKey = 'chemieUsers_v6';
-    
-    const supabaseUrl = 'https://abcdefg12345.supabase.co';
-    const supabaseKey = 'sb_publishable_y0RhIwDsXUCK46Xrf9t7xw_9EXUh3Db';
-    
-    // OPTION A: Explicitly check for placeholder credentials
-    const isPlaceholder = supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseUrl.includes('abcdefg12345');
-    
-    if (!isPlaceholder && supabaseUrl.startsWith('http') && window.supabase) {
+
+    const { url, anonKey } = SUPABASE_CONFIG;
+    const isConfigured =
+      typeof url === 'string' && url.startsWith('http') &&
+      !url.includes('YOUR_SUPABASE_URL') && !url.includes('abcdefg12345') &&
+      typeof anonKey === 'string' && anonKey.length > 20;
+
+    if (isConfigured && window.supabase) {
       try {
-        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        this.supabase = window.supabase.createClient(url, anonKey);
         this.useSupabase = true;
+        console.info('☁️  Supabase geaktiveer — ranglys is globaal.');
       } catch (e) {
-        console.error('Supabase initialization failed:', e);
+        console.error('Supabase init het gefaal:', e);
         this.useSupabase = false;
       }
     } else {
-      this.useSupabase = false;
+      console.info('💾 Supabase nie gekonfigureer nie — ranglys werk slegs op hierdie toestel (localStorage).');
     }
   }
 
@@ -946,58 +958,53 @@ class UserSystem {
     }
   }
 
+  _disableSupabaseForSession(reason, err) {
+    if (this.useSupabase) {
+      console.warn('⚠️  Supabase onbruikbaar, skakel oor na localStorage vir hierdie sessie:', reason, err || '');
+    }
+    this.useSupabase = false;
+  }
+
   async register(username, password, confirmPassword) {
     const trimmedUser = username.trim();
     const cleanUser = trimmedUser.toLowerCase();
-    if (trimmedUser.length < 3) return { success: false, message: ' Naam moet minstens 3 karakters wees!' };
+    if (trimmedUser.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
     if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
     if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
-    
+
     if (this.useSupabase) {
-      const { data: existingUser, error: checkError } = await this.supabase
-        .from('users')
-        .select('username')
-        .eq('username', cleanUser)
-        .single();
-        
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Check user Supabase error, falling back to localStorage:', checkError);
-        this.useSupabase = false;
-      } else if (existingUser) {
-        return { success: false, message: `❌ Gebruikersnaam "${existingUser.username}" bestaan reeds!` };
-      }
-      
-      if (this.useSupabase) {
-        const stats = this.getDefaultStats();
-        const { error: insertError } = await this.supabase
-          .from('users')
-          .insert({
-            username: cleanUser,
-            display_name: trimmedUser,
-            password_hash: this.hashPassword(password),
-            profile_image: null,
-            total_correct: stats.totalCorrect,
-            total_wrong: stats.totalWrong,
-            best_streak: stats.bestStreak,
-            best_height: stats.bestHeight,
-            best_lava_height: stats.bestLavaHeight,
-            games_played: stats.gamesPlayed,
-            lava_mode_used: stats.lavaModeUsed,
-            total_blocks_stacked: stats.totalBlocksStacked,
-            last_played: stats.lastPlayed,
-            created_at: new Date().toISOString(),
-            last_login: new Date().toISOString()
-          });
-        if (insertError) {
-          console.error('Register Supabase error, falling back to localStorage:', insertError);
-          this.useSupabase = false;
-        } else {
-          return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+      try {
+        const { data: existingUser, error: checkError } = await this.supabase
+          .from('users').select('username').eq('username', cleanUser).maybeSingle();
+        if (checkError) throw checkError;
+        if (existingUser) {
+          return { success: false, message: `❌ Gebruikersnaam "${existingUser.username}" bestaan reeds!` };
         }
+        const stats = this.getDefaultStats();
+        const { error: insertError } = await this.supabase.from('users').insert({
+          username: cleanUser,
+          display_name: trimmedUser,
+          password_hash: this.hashPassword(password),
+          profile_image: null,
+          total_correct: stats.totalCorrect,
+          total_wrong: stats.totalWrong,
+          best_streak: stats.bestStreak,
+          best_height: stats.bestHeight,
+          best_lava_height: stats.bestLavaHeight,
+          games_played: stats.gamesPlayed,
+          lava_mode_used: stats.lavaModeUsed,
+          total_blocks_stacked: stats.totalBlocksStacked,
+          last_played: stats.lastPlayed,
+          created_at: new Date().toISOString(),
+          last_login: new Date().toISOString()
+        });
+        if (insertError) throw insertError;
+        return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+      } catch (err) {
+        this._disableSupabaseForSession('register', err);
       }
     }
-    
-    // Fallback to localStorage
+
     const users = this._getFallbackUsers();
     if (users[cleanUser]) {
       return { success: false, message: `❌ Gebruikersnaam "${users[cleanUser].displayName}" bestaan reeds!` };
@@ -1017,38 +1024,40 @@ class UserSystem {
   async login(username, password) {
     const cleanUser = username.trim().toLowerCase();
     if (this.useSupabase) {
-      const { data: user, error } = await this.supabase
-        .from('users')
-        .select('*')
-        .eq('username', cleanUser)
-        .single();
-        
-      if (error) {
-        console.error('Login Supabase error, falling back to localStorage:', error);
-        this.useSupabase = false;
-      } else if (user) {
-        if (this.hashPassword(password) !== user.password_hash) return { success: false, message: '❌ Verkeerde wagwoord!' };
-        await this.supabase.from('users').update({ last_login: new Date().toISOString() }).eq('username', cleanUser).catch(e => console.error('Update last_login error:', e));
+      try {
+        const { data: user, error } = await this.supabase
+          .from('users').select('*').eq('username', cleanUser).maybeSingle();
+        if (error) throw error;
+        if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
+        if (this.hashPassword(password) !== user.password_hash) {
+          return { success: false, message: '❌ Verkeerde wagwoord!' };
+        }
+        try {
+          await this.supabase.from('users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('username', cleanUser);
+        } catch (e) { /* ignore */ }
         this.currentUser = cleanUser;
         this.currentUserData = user;
         localStorage.setItem('chemieCurrentUser', cleanUser);
-        const displayName = user.display_name || cleanUser;
-        return { success: true, message: `✅ Welkom terug, ${displayName}!` };
+        return { success: true, message: `✅ Welkom terug, ${user.display_name || cleanUser}!` };
+      } catch (err) {
+        this._disableSupabaseForSession('login', err);
       }
     }
-    
-    // Fallback to localStorage
+
     const users = this._getFallbackUsers();
     const user = users[cleanUser];
     if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
-    if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
+    if (this.hashPassword(password) !== user.password) {
+      return { success: false, message: '❌ Verkeerde wagwoord!' };
+    }
     user.lastLogin = new Date().toISOString();
     this._saveFallbackUsers(users);
     this.currentUser = cleanUser;
     this.currentUserData = user;
     localStorage.setItem('chemieCurrentUser', cleanUser);
-    const displayName = user.displayName || cleanUser;
-    return { success: true, message: `✅ Welkom terug, ${displayName}!` };
+    return { success: true, message: `✅ Welkom terug, ${user.displayName || cleanUser}!` };
   }
 
   logout() {
@@ -1061,20 +1070,16 @@ class UserSystem {
   async deleteAccount() {
     if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
     if (this.useSupabase) {
-      const { error } = await this.supabase
-        .from('users')
-        .delete()
-        .eq('username', this.currentUser);
-      if (error) {
-        console.error('Delete account Supabase error, falling back to localStorage:', error);
-        this.useSupabase = false;
-      } else {
+      try {
+        const { error } = await this.supabase.from('users')
+          .delete().eq('username', this.currentUser);
+        if (error) throw error;
         this.logout();
         return { success: true, message: '✅ Rekening suksesvol uitgevee' };
+      } catch (err) {
+        this._disableSupabaseForSession('deleteAccount', err);
       }
     }
-    
-    // Fallback
     const users = this._getFallbackUsers();
     delete users[this.currentUser];
     this._saveFallbackUsers(users);
@@ -1085,20 +1090,16 @@ class UserSystem {
   async updateProfileImage(imageData) {
     if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
     if (this.useSupabase) {
-      const { error } = await this.supabase
-        .from('users')
-        .update({ profile_image: imageData })
-        .eq('username', this.currentUser);
-      if (error) {
-        console.error('Update profile image Supabase error, falling back to localStorage:', error);
-        this.useSupabase = false;
-      } else {
+      try {
+        const { error } = await this.supabase.from('users')
+          .update({ profile_image: imageData }).eq('username', this.currentUser);
+        if (error) throw error;
         this.currentUserData.profile_image = imageData;
         return { success: true, message: '✅ Foto opgedateer' };
+      } catch (err) {
+        this._disableSupabaseForSession('updateProfileImage', err);
       }
     }
-    
-    // Fallback
     const users = this._getFallbackUsers();
     if (!users[this.currentUser]) return { success: false, message: 'Gebruiker nie gevind nie' };
     users[this.currentUser].profileImage = imageData;
@@ -1121,53 +1122,53 @@ class UserSystem {
         totalBlocksStacked: this.currentUserData.total_blocks_stacked || 0,
         lastPlayed: this.currentUserData.last_played,
       };
-    } else {
-      return this.currentUserData.stats || this.getDefaultStats();
     }
+    const s = this.currentUserData.stats || this.getDefaultStats();
+    return { ...s };
   }
 
   getDisplayName() {
     if (!this.currentUser || !this.currentUserData) return null;
-    return this.useSupabase ? (this.currentUserData.display_name || this.currentUser) : (this.currentUserData.displayName || this.currentUser);
+    return this.useSupabase
+      ? (this.currentUserData.display_name || this.currentUser)
+      : (this.currentUserData.displayName || this.currentUser);
   }
 
   getProfileImage() {
     if (!this.currentUser || !this.currentUserData) return DEFAULT_AVATAR;
-    const img = this.useSupabase ? this.currentUserData.profile_image : this.currentUserData.profileImage;
+    const img = this.useSupabase
+      ? this.currentUserData.profile_image
+      : this.currentUserData.profileImage;
     return img || DEFAULT_AVATAR;
   }
 
   async updateUserStats(newStats) {
     if (!this.currentUser) return false;
     if (this.useSupabase) {
-      const dbStats = {
-        total_correct: newStats.totalCorrect,
-        total_wrong: newStats.totalWrong,
-        best_streak: newStats.bestStreak,
-        best_height: newStats.bestHeight,
-        best_lava_height: newStats.bestLavaHeight,
-        games_played: newStats.gamesPlayed,
-        lava_mode_used: newStats.lavaModeUsed,
-        total_blocks_stacked: newStats.totalBlocksStacked,
-        last_played: newStats.lastPlayed || new Date().toISOString()
-      };
-      const { error } = await this.supabase
-        .from('users')
-        .update(dbStats)
-        .eq('username', this.currentUser);
-      if (error) {
-        console.error('Update user stats Supabase error, falling back to localStorage:', error);
-        this.useSupabase = false;
-      } else {
+      try {
+        const dbStats = {
+          total_correct: newStats.totalCorrect,
+          total_wrong: newStats.totalWrong,
+          best_streak: newStats.bestStreak,
+          best_height: newStats.bestHeight,
+          best_lava_height: newStats.bestLavaHeight,
+          games_played: newStats.gamesPlayed,
+          lava_mode_used: newStats.lavaModeUsed,
+          total_blocks_stacked: newStats.totalBlocksStacked,
+          last_played: newStats.lastPlayed || new Date().toISOString()
+        };
+        const { error } = await this.supabase.from('users')
+          .update(dbStats).eq('username', this.currentUser);
+        if (error) throw error;
         this.currentUserData = { ...this.currentUserData, ...dbStats };
         return true;
+      } catch (err) {
+        this._disableSupabaseForSession('updateUserStats', err);
       }
     }
-    
-    // Fallback
     const users = this._getFallbackUsers();
     if (!users[this.currentUser]) return false;
-    users[this.currentUser].stats = { ...users[this.currentUser].stats, ...newStats };
+    users[this.currentUser].stats = { ...(users[this.currentUser].stats || {}), ...newStats };
     this.currentUserData = users[this.currentUser];
     this._saveFallbackUsers(users);
     return true;
@@ -1207,17 +1208,14 @@ class UserSystem {
         'gamesPlayed': 'games_played'
       };
       const dbSortBy = sortMap[sortBy] || 'best_height';
-      const { data, error } = await this.supabase
-        .from('users')
-        .select('username, display_name, profile_image, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
-        .order(dbSortBy, { ascending: false })
-        .limit(limit);
-        
-      if (error) {
-        console.error('Leaderboard Supabase error, falling back to localStorage:', error);
-        this.useSupabase = false;
-      } else if (data) {
-        return data.map(row => ({
+      try {
+        const { data, error } = await this.supabase
+          .from('users')
+          .select('username, display_name, profile_image, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
+          .order(dbSortBy, { ascending: false })
+          .limit(limit);
+        if (error) throw error;
+        return (data || []).map(row => ({
           username: row.username || 'onbekend',
           displayName: row.display_name || row.username || 'Onbekend',
           profileImage: row.profile_image,
@@ -1230,19 +1228,12 @@ class UserSystem {
           },
           lastLogin: row.last_login
         }));
+      } catch (err) {
+        console.warn('⚠️  Ranglys: Supabase oproep het gefaal, gebruik localStorage:', err.message || err);
       }
     }
-    
-    // Fallback to localStorage
+
     const users = this._getFallbackUsers();
-    const sortMap = {
-      'bestHeight': 'bestHeight',
-      'totalCorrect': 'totalCorrect',
-      'bestStreak': 'bestStreak',
-      'bestLavaHeight': 'bestLavaHeight',
-      'gamesPlayed': 'gamesPlayed'
-    };
-    const fallbackSortBy = sortMap[sortBy] || 'bestHeight';
     const entries = Object.entries(users).map(([key, data]) => ({
       username: key,
       displayName: data.displayName || key,
@@ -1251,17 +1242,53 @@ class UserSystem {
       lastLogin: data.lastLogin,
     }));
     entries.sort((a, b) => {
-      const valA = a.stats[fallbackSortBy] || 0;
-      const valB = b.stats[fallbackSortBy] || 0;
+      const valA = a.stats[sortBy] || 0;
+      const valB = b.stats[sortBy] || 0;
       return valB - valA;
     });
     return entries.slice(0, limit);
+  }
+
+  async migrateLocalUsersToSupabase() {
+    if (!this.useSupabase) {
+      console.warn('Supabase is nie geaktiveer nie — niks om te migreer nie.');
+      return { migrated: 0, skipped: 0 };
+    }
+    const users = this._getFallbackUsers();
+    let migrated = 0, skipped = 0;
+    for (const [username, data] of Object.entries(users)) {
+      const stats = data.stats || this.getDefaultStats();
+      const row = {
+        username,
+        display_name: data.displayName || username,
+        password_hash: data.password || '',
+        profile_image: data.profileImage || null,
+        total_correct: stats.totalCorrect || 0,
+        total_wrong: stats.totalWrong || 0,
+        best_streak: stats.bestStreak || 0,
+        best_height: stats.bestHeight || 3,
+        best_lava_height: stats.bestLavaHeight || 0,
+        games_played: stats.gamesPlayed || 0,
+        lava_mode_used: stats.lavaModeUsed || 0,
+        total_blocks_stacked: stats.totalBlocksStacked || 0,
+        last_played: stats.lastPlayed || new Date().toISOString(),
+        created_at: data.created || new Date().toISOString(),
+        last_login: data.lastLogin || new Date().toISOString()
+      };
+      try {
+        const { error } = await this.supabase.from('users').upsert(row, { onConflict: 'username' });
+        if (error) { console.warn('Skip', username, error.message); skipped++; }
+        else migrated++;
+      } catch (e) { console.warn('Skip', username, e); skipped++; }
+    }
+    console.info(`✅ Migrasie klaar: ${migrated} oorgedra, ${skipped} oorgeslaan.`);
+    return { migrated, skipped };
   }
 }
 const userSystem = new UserSystem();
 
 // ================================================================
-//   PROFIEL FUNCTIES
+//   PROFIEL FUNKSIES
 // ================================================================
 function showProfilePopup() {
   if (!userSystem.currentUser) return;
@@ -1737,7 +1764,7 @@ function initGame(resetLava = true, forceNew = false) {
             lavaBtn.classList.add('active');
             lavaStatus.style.display = 'inline';
           } else {
-            lavaBtn.textContent = ' Lava Mode';
+            lavaBtn.textContent = '🌋 Lava Mode';
             lavaBtn.classList.remove('active');
             lavaStatus.style.display = 'none';
           }
@@ -1782,9 +1809,11 @@ function initGame(resetLava = true, forceNew = false) {
       bestHeight = stats.bestHeight;
       saveBestHeight();
     }
-    stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
-    userSystem.updateUserStats(stats);
-    updateUserUI();
+    if (stats) {
+      stats.gamesPlayed = (stats.gamesPlayed || 0) + 1;
+      userSystem.updateUserStats(stats);
+      updateUserUI();
+    }
   }
   if (resetLava) { lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaTime = 0; lavaBubbles = []; }
   stars = [];
@@ -1818,7 +1847,7 @@ function generateQuestion() {
   } else {
     currentQ = { display: item.name, answer: item.answer, type: 'name', correctAnswer: item.answer, hint: '📝 tik die formule (bv. SO4(-2))' };
     qText.textContent = item.name;
-    qHint.textContent = ' tik die formule (bv. SO4(-2))';
+    qHint.textContent = '📝 tik die formule (bv. SO4(-2))';
   }
   currentCorrect = currentQ.answer;
   answerInput.value = '';
@@ -2713,7 +2742,7 @@ function gameLoop() {
 function toggleLavaMode() {
   isLavaMode = !isLavaMode;
   if (isLavaMode) {
-    lavaBtn.textContent = ' Lava: AAN';
+    lavaBtn.textContent = '🌋 Lava: AAN';
     lavaBtn.classList.add('active');
     lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaTime = 0; lavaBubbles = [];
     if (animFrame) cancelAnimationFrame(animFrame);
@@ -2780,17 +2809,14 @@ canvas.addEventListener('click', () => { if (!isGameOver) answerInput.focus(); }
 // ================================================================
 async function checkSession() {
   const savedUser = localStorage.getItem('chemieCurrentUser');
-  if (savedUser) {
-    if (userSystem.useSupabase) {
+  if (!savedUser) return false;
+
+  if (userSystem.useSupabase) {
+    try {
       const { data: user, error } = await userSystem.supabase
-        .from('users')
-        .select('*')
-        .eq('username', savedUser)
-        .single();
-      if (error) {
-        console.error('Session restore Supabase error, falling back to localStorage:', error);
-        userSystem.useSupabase = false;
-      } else if (user) {
+        .from('users').select('*').eq('username', savedUser).maybeSingle();
+      if (error) throw error;
+      if (user) {
         userSystem.currentUser = savedUser;
         userSystem.currentUserData = user;
         updateUserUI();
@@ -2798,23 +2824,22 @@ async function checkSession() {
         setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
         return true;
       }
-    }
-    
-    // Fallback
-    if (!userSystem.useSupabase || !userSystem.currentUser) {
-      const users = userSystem._getFallbackUsers();
-      if (users[savedUser]) {
-        userSystem.currentUser = savedUser;
-        userSystem.currentUserData = users[savedUser];
-        updateUserUI();
-        loadUserStatsIntoGame();
-        setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
-        return true;
-      } else {
-        localStorage.removeItem('chemieCurrentUser');
-      }
+    } catch (err) {
+      console.warn('⚠️  Session restore Supabase gefaal, val terug na localStorage:', err.message || err);
     }
   }
+
+  const users = userSystem._getFallbackUsers();
+  if (users[savedUser]) {
+    userSystem.currentUser = savedUser;
+    userSystem.currentUserData = users[savedUser];
+    updateUserUI();
+    loadUserStatsIntoGame();
+    setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
+    return true;
+  }
+
+  localStorage.removeItem('chemieCurrentUser');
   return false;
 }
 
