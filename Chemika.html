@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>🧱 Blok Stapel • Chemie • Harte</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -695,6 +697,38 @@
     </div>
 
     <script>
+        /*
+         * =====================================================================
+         * SUPABASE OPSTEL INSTRUKSIES:
+         * 1. Skep 'n nuwe projek op https://supabase.com
+         * 2. Gaan na die "SQL Editor" en voer die volgende query uit:
+         * 
+         * CREATE TABLE users (
+         *     username TEXT PRIMARY KEY,
+         *     display_name TEXT,
+         *     password_hash TEXT,
+         *     total_correct INT DEFAULT 0,
+         *     total_wrong INT DEFAULT 0,
+         *     best_streak INT DEFAULT 0,
+         *     best_height INT DEFAULT 3,
+         *     games_played INT DEFAULT 0,
+         *     lava_mode_used INT DEFAULT 0,
+         *     total_blocks_stacked INT DEFAULT 0,
+         *     last_played TIMESTAMPTZ DEFAULT NOW(),
+         *     created_at TIMESTAMPTZ DEFAULT NOW(),
+         *     last_login TIMESTAMPTZ DEFAULT NOW()
+         * );
+         * 
+         * 3. Stel Row Level Security (RLS) policies in vir openbare toegang:
+         *    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+         *    CREATE POLICY "Allow public read" ON users FOR SELECT USING (true);
+         *    CREATE POLICY "Allow public insert" ON users FOR INSERT WITH CHECK (true);
+         *    CREATE POLICY "Allow public update" ON users FOR UPDATE USING (true);
+         * 
+         * 4. Vervang 'YOUR_SUPABASE_URL' en 'YOUR_SUPABASE_ANON_KEY' hieronder.
+         * =====================================================================
+         */
+
         // ================================================================
         //   HULP-FUNKSIES VIR UI
         // ================================================================
@@ -741,120 +775,138 @@
         }
 
         // ================================================================
-        //   GEBRUIKER STELSEL MET PERSISTENTE DATA-STOOR
+        //   GEBRUIKER STELSEL MET SUPABASE DATA-STOOR
         // ================================================================
         class UserSystem {
             constructor() {
-                // BELANGRIK: Stel storageKey EERSTE voordat loadAllUsers() geroep word
-                this.storageKey = 'chemieUsers_v5';
                 this.currentUser = null;
-                this.users = this.loadAllUsers();
-                this.lastSaved = null;
-                
-                console.log('📦 UserSystem geïnisialiseer met', Object.keys(this.users).length, 'gebruikers');
+                this.currentUserData = null;
+                // ⚠️ VERVANG HIERDIE MET JOU EIE SUPABASE URL EN ANON KEY
+                this.supabase = window.supabase.createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
             }
 
-            loadAllUsers() {
-                try {
-                    const data = localStorage.getItem(this.storageKey);
-                    if (data) {
-                        const parsed = JSON.parse(data);
-                        console.log('✅ Gebruikersdata suksesvol gelaai vanaf localStorage');
-                        return parsed;
-                    }
-                    console.log('ℹ️ Geen bestaande gebruikersdata gevind nie');
-                } catch (e) {
-                    console.error('❌ Fout met laai van gebruikersdata:', e);
-                }
-                return {};
-            }
-
-            saveAllUsers() {
-                try {
-                    const dataToSave = JSON.stringify(this.users);
-                    localStorage.setItem(this.storageKey, dataToSave);
-                    this.lastSaved = new Date().toISOString();
-                    console.log('✅ Gebruikersdata suksesvol gestoor na localStorage om', this.lastSaved);
-                    console.log('📊 Data grootte:', (dataToSave.length / 1024).toFixed(2), 'KB');
-                    return true;
-                } catch (e) {
-                    console.error('❌ Fout met stoor van gebruikersdata:', e);
-                    return false;
-                }
-            }
-
-            register(username, password, confirmPassword) {
+            async register(username, password, confirmPassword) {
                 const trimmedUser = username.trim();
                 const cleanUser = trimmedUser.toLowerCase();
-                
-                if (this.users[cleanUser]) {
-                    return { 
-                        success: false, 
-                        message: `❌ Gebruikersnaam "${this.users[cleanUser].displayName}" bestaan reeds!` 
-                    };
-                }
                 
                 if (trimmedUser.length < 3) return { success: false, message: '❌ Naam moet minstens 3 karakters wees!' };
                 if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
                 if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
-                this.users[cleanUser] = {
-                    displayName: trimmedUser,
-                    password: this.hashPassword(password),
-                    stats: this.getDefaultStats(),
-                    created: new Date().toISOString(),
-                    lastLogin: new Date().toISOString(),
-                };
-                
-                const saved = this.saveAllUsers();
-                if (saved) {
-                    return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
-                } else {
-                    return { success: false, message: '❌ Kon nie data stoor nie!' };
+                const { data: existingUser, error: checkError } = await this.supabase
+                    .from('users')
+                    .select('username')
+                    .eq('username', cleanUser)
+                    .single();
+
+                if (existingUser) {
+                    return { success: false, message: `❌ Gebruikersnaam "${existingUser.username}" bestaan reeds!` };
                 }
+
+                const stats = this.getDefaultStats();
+                const { error: insertError } = await this.supabase
+                    .from('users')
+                    .insert({
+                        username: cleanUser,
+                        display_name: trimmedUser,
+                        password_hash: this.hashPassword(password),
+                        total_correct: stats.totalCorrect,
+                        total_wrong: stats.totalWrong,
+                        best_streak: stats.bestStreak,
+                        best_height: stats.bestHeight,
+                        games_played: stats.gamesPlayed,
+                        lava_mode_used: stats.lavaModeUsed,
+                        total_blocks_stacked: stats.totalBlocksStacked,
+                        last_played: stats.lastPlayed,
+                        created_at: new Date().toISOString(),
+                        last_login: new Date().toISOString()
+                    });
+
+                if (insertError) {
+                    console.error('❌ Fout met registrasie:', insertError);
+                    return { success: false, message: '❌ Kon nie gebruiker registreer nie!' };
+                }
+
+                return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
             }
 
-            login(username, password) {
+            async login(username, password) {
                 const cleanUser = username.trim().toLowerCase();
-                const user = this.users[cleanUser];
                 
-                if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
-                if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
+                const { data: user, error } = await this.supabase
+                    .from('users')
+                    .select('*')
+                    .eq('username', cleanUser)
+                    .single();
 
-                user.lastLogin = new Date().toISOString();
-                this.saveAllUsers();
+                if (error || !user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
+                if (this.hashPassword(password) !== user.password_hash) return { success: false, message: '❌ Verkeerde wagwoord!' };
+
+                await this.supabase
+                    .from('users')
+                    .update({ last_login: new Date().toISOString() })
+                    .eq('username', cleanUser);
+
                 this.currentUser = cleanUser;
-                
-                // Gebruik localStorage vir persistent session (oorleef refresh)
+                this.currentUserData = user;
                 localStorage.setItem('chemieCurrentUser', cleanUser);
                 
-                const displayName = user.displayName || cleanUser;
+                const displayName = user.display_name || cleanUser;
                 return { success: true, message: `✅ Welkom terug, ${displayName}!` };
             }
 
             logout() {
                 this.currentUser = null;
+                this.currentUserData = null;
                 localStorage.removeItem('chemieCurrentUser');
                 return { success: true, message: '👋 Jy is uitgeteken!' };
             }
 
             getUserStats() {
-                if (!this.currentUser) return null;
-                return this.users[this.currentUser]?.stats || null;
+                if (!this.currentUserData) return null;
+                return {
+                    totalCorrect: this.currentUserData.total_correct || 0,
+                    totalWrong: this.currentUserData.total_wrong || 0,
+                    bestStreak: this.currentUserData.best_streak || 0,
+                    bestHeight: this.currentUserData.best_height || 3,
+                    gamesPlayed: this.currentUserData.games_played || 0,
+                    lavaModeUsed: this.currentUserData.lava_mode_used || 0,
+                    totalBlocksStacked: this.currentUserData.total_blocks_stacked || 0,
+                    lastPlayed: this.currentUserData.last_played,
+                };
             }
 
             getDisplayName() {
-                if (!this.currentUser) return null;
-                const user = this.users[this.currentUser];
-                return user?.displayName || this.currentUser;
+                if (!this.currentUserData) return null;
+                return this.currentUserData.display_name || this.currentUser;
             }
 
-            updateUserStats(newStats) {
+            async updateUserStats(newStats) {
                 if (!this.currentUser) return false;
-                const user = this.users[this.currentUser];
-                if (!user) return false;
-                user.stats = { ...user.stats, ...newStats };
-                return this.saveAllUsers();
+                
+                const dbStats = {
+                    total_correct: newStats.totalCorrect,
+                    total_wrong: newStats.totalWrong,
+                    best_streak: newStats.bestStreak,
+                    best_height: newStats.bestHeight,
+                    games_played: newStats.gamesPlayed,
+                    lava_mode_used: newStats.lavaModeUsed,
+                    total_blocks_stacked: newStats.totalBlocksStacked,
+                    last_played: newStats.lastPlayed || new Date().toISOString()
+                };
+
+                const { error } = await this.supabase
+                    .from('users')
+                    .update(dbStats)
+                    .eq('username', this.currentUser);
+
+                if (error) {
+                    console.error('❌ Fout met stoor van stats:', error);
+                    return false;
+                }
+                
+                this.currentUserData = { ...this.currentUserData, ...dbStats };
+                return true;
             }
 
             getDefaultStats() {
@@ -880,20 +932,37 @@
                 return hash.toString(36);
             }
 
-            getLeaderboard(sortBy = 'bestHeight', limit = 50) {
-                const entries = Object.entries(this.users).map(([username, data]) => ({
-                    username: data.displayName || username,
-                    stats: data.stats || this.getDefaultStats(),
-                    lastLogin: data.lastLogin,
+            async getLeaderboard(sortBy = 'bestHeight', limit = 50) {
+                const sortMap = {
+                    'bestHeight': 'best_height',
+                    'totalCorrect': 'total_correct',
+                    'bestStreak': 'best_streak',
+                    'gamesPlayed': 'games_played'
+                };
+                const dbSortBy = sortMap[sortBy] || 'best_height';
+
+                const { data, error } = await this.supabase
+                    .from('users')
+                    .select('username, display_name, total_correct, best_streak, best_height, games_played, last_login')
+                    .order(dbSortBy, { ascending: false })
+                    .limit(limit);
+
+                if (error) {
+                    console.error('❌ Fout met laai van ranglys:', error);
+                    return [];
+                }
+
+                return data.map(row => ({
+                    username: row.username,
+                    displayName: row.display_name || row.username,
+                    stats: {
+                        totalCorrect: row.total_correct || 0,
+                        bestStreak: row.best_streak || 0,
+                        bestHeight: row.best_height || 3,
+                        gamesPlayed: row.games_played || 0
+                    },
+                    lastLogin: row.last_login
                 }));
-
-                entries.sort((a, b) => {
-                    const valA = a.stats[sortBy] || 0;
-                    const valB = b.stats[sortBy] || 0;
-                    return valB - valA;
-                });
-
-                return entries.slice(0, limit);
             }
         }
 
@@ -923,18 +992,18 @@
         
         function hideRegisterPopup() { document.getElementById('registerPopup').classList.remove('show'); }
 
-        function showLeaderboardPopup() {
+        async function showLeaderboardPopup() {
             document.getElementById('leaderboardPopup').classList.add('show');
-            renderLeaderboard('bestHeight');
+            await renderLeaderboard('bestHeight');
         }
 
         function hideLeaderboardPopup() {
             document.getElementById('leaderboardPopup').classList.remove('show');
         }
 
-        function renderLeaderboard(sortBy) {
+        async function renderLeaderboard(sortBy) {
             const list = document.getElementById('leaderboardList');
-            const leaderboard = userSystem.getLeaderboard(sortBy, 50);
+            const leaderboard = await userSystem.getLeaderboard(sortBy, 50);
 
             if (leaderboard.length === 0) {
                 list.innerHTML = '<div class="leaderboard-empty">🎮 Geen spelers nog nie.<br>Speel om op die ranglys te verskyn!</div>';
@@ -944,18 +1013,18 @@
             let html = '';
             leaderboard.forEach((entry, index) => {
                 const rank = index + 1;
-                const isCurrentUser = userSystem.currentUser === entry.username.toLowerCase();
+                const isCurrentUser = userSystem.currentUser === entry.username;
                 const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
                 
                 const value = entry.stats[sortBy] || 0;
-                const lastPlayed = new Date(entry.lastLogin).toLocaleDateString('af-ZA');
+                const lastPlayed = entry.lastLogin ? new Date(entry.lastLogin).toLocaleDateString('af-ZA') : 'Onbekend';
 
                 html += `
                     <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
                         <div class="leaderboard-rank ${rankClass}">${medal}</div>
                         <div class="leaderboard-info">
-                            <div class="leaderboard-name">${entry.username} ${isCurrentUser ? '(Jy)' : ''}</div>
+                            <div class="leaderboard-name">${entry.displayName} ${isCurrentUser ? '(Jy)' : ''}</div>
                             <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
                         </div>
                         <div class="leaderboard-value">${value}</div>
@@ -1015,10 +1084,10 @@
         });
 
         document.querySelectorAll('.leaderboard-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
+            tab.addEventListener('click', async function() {
                 document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
-                renderLeaderboard(this.dataset.sort);
+                await renderLeaderboard(this.dataset.sort);
             });
         });
 
@@ -1030,8 +1099,9 @@
                 return;
             }
             setLoading('loginSubmitBtn', true, '🔓 Teken In');
-            await new Promise(r => setTimeout(r, 400));
-            const result = userSystem.login(username, password);
+            
+            const result = await userSystem.login(username, password);
+            
             if (result.success) {
                 clearError('loginError');
                 hideLoginPopup();
@@ -1057,12 +1127,13 @@
                 return;
             }
             setLoading('registerSubmitBtn', true, '📝 Registreer');
-            await new Promise(r => setTimeout(r, 400));
-            const result = userSystem.register(username, password, confirmPassword);
+            
+            const result = await userSystem.register(username, password, confirmPassword);
+            
             if (result.success) {
                 clearError('registerError');
                 hideRegisterPopup();
-                const loginResult = userSystem.login(username, password);
+                const loginResult = await userSystem.login(username, password);
                 if (loginResult.success) {
                     updateUserUI();
                     loadUserStatsIntoGame();
@@ -1256,7 +1327,7 @@
                 updateUserUI();
             }
 
-            if (resetLava) { lavaLevel = GROUND_Y; lavaTime = 0; lavaBubbles = []; lavaSpeed = 0.05; }
+            if (resetLava) { lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaTime = 0; lavaBubbles = []; }
 
             stars = [];
             for (let i = 0; i < 200; i++) {
@@ -2334,18 +2405,28 @@
         canvas.addEventListener('click', () => { if (!isGameOver) answerInput.focus(); });
 
         // ================================================================
-        //   SESSION HERSTEL - Gebruik localStorage vir persistent session
+        //   SESSION HERSTEL
         // ================================================================
-        function checkSession() {
-            // Gebruik localStorage in plaas van sessionStorage vir persistent session
+        async function checkSession() {
             const savedUser = localStorage.getItem('chemieCurrentUser');
-            if (savedUser && userSystem.users[savedUser]) {
-                userSystem.currentUser = savedUser;
-                updateUserUI();
-                loadUserStatsIntoGame();
-                console.log('✅ Session herstel vir gebruiker:', userSystem.getDisplayName());
-                setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
-                return true;
+            if (savedUser) {
+                const { data: user, error } = await userSystem.supabase
+                    .from('users')
+                    .select('*')
+                    .eq('username', savedUser)
+                    .single();
+                    
+                if (user && !error) {
+                    userSystem.currentUser = savedUser;
+                    userSystem.currentUserData = user;
+                    updateUserUI();
+                    loadUserStatsIntoGame();
+                    console.log('✅ Session herstel vir gebruiker:', userSystem.getDisplayName());
+                    setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
+                    return true;
+                } else {
+                    localStorage.removeItem('chemieCurrentUser');
+                }
             }
             console.log('ℹ️ Geen aktiewe session gevind nie');
             return false;
@@ -2355,15 +2436,13 @@
         //   INITIALISASIE
         // ================================================================
         console.log('🎮 Blok Stapel Chemie word gelaai...');
-        console.log('📦 localStorage sleutel:', userSystem.storageKey);
-        console.log('👤 Geregistreerde gebruikers:', Object.keys(userSystem.users).length);
+        console.log('☁️ Supabase client geïnisialiseer');
         
         loadBestHeight();
         initGame(true);
         gameLoop();
         answerInput.focus();
         
-        // Herstel session na 'n kort vertraging
         setTimeout(checkSession, 200);
 
         console.log('✅ Blok Stapel Chemie suksesvol gelaai!');
