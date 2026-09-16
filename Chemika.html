@@ -620,7 +620,6 @@ body {
 <body>
 <div id="appContainer">
   <div id="userSystem">
-    <!-- PROFIEL KNOPPIE HIER (rooi blokkie area) -->
     <div class="profile-header-container" id="profileHeaderContainer">
       <button class="profile-header-btn" id="profileHeaderBtn" title="Profiel">
         <div class="default-avatar"></div>
@@ -898,11 +897,10 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Default profiel prentjie (base64 encoded simple avatar)
 const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjQ4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfkqQ8L3RleHQ+PC9zdmc+';
 
 // ================================================================
-//   GEBRUIKER STELSEL (Supabase met localStorage fallback)
+//   GEBRUIKER STELSEL (Robuuste Supabase met localStorage fallback)
 // ================================================================
 class UserSystem {
   constructor() {
@@ -911,20 +909,26 @@ class UserSystem {
     this.useSupabase = false;
     this.supabase = null;
     this.storageKey = 'chemieUsers_v6';
+    
     const supabaseUrl = 'https://abcdefg12345.supabase.co';
     const supabaseKey = 'sb_publishable_y0RhIwDsXUCK46Xrf9t7xw_9EXUh3Db';
-    if (supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseUrl.startsWith('http')) {
+    
+    // OPTION A: Explicitly check for placeholder credentials
+    const isPlaceholder = supabaseUrl === 'YOUR_SUPABASE_URL' || supabaseUrl.includes('abcdefg12345');
+    
+    if (!isPlaceholder && supabaseUrl.startsWith('http') && window.supabase) {
       try {
-        if (window.supabase) {
-          this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-          this.useSupabase = true;
-        }
+        this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        this.useSupabase = true;
       } catch (e) {
         console.error('Supabase initialization failed:', e);
         this.useSupabase = false;
       }
+    } else {
+      this.useSupabase = false;
     }
   }
+
   _getFallbackUsers() {
     try {
       const data = localStorage.getItem(this.storageKey);
@@ -933,74 +937,83 @@ class UserSystem {
       return {};
     }
   }
+
   _saveFallbackUsers(users) {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(users));
     } catch (e) {
-      // Silent fail
+      console.error('localStorage save failed:', e);
     }
   }
+
   async register(username, password, confirmPassword) {
     const trimmedUser = username.trim();
     const cleanUser = trimmedUser.toLowerCase();
     if (trimmedUser.length < 3) return { success: false, message: ' Naam moet minstens 3 karakters wees!' };
     if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
     if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
+    
     if (this.useSupabase) {
       const { data: existingUser, error: checkError } = await this.supabase
         .from('users')
         .select('username')
         .eq('username', cleanUser)
         .single();
-      if (existingUser) {
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Check user Supabase error, falling back to localStorage:', checkError);
+        this.useSupabase = false;
+      } else if (existingUser) {
         return { success: false, message: `❌ Gebruikersnaam "${existingUser.username}" bestaan reeds!` };
       }
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Check user Supabase error:', checkError);
-        return { success: false, message: '❌ Kon nie gebruikersnaam kontroleer nie.' };
+      
+      if (this.useSupabase) {
+        const stats = this.getDefaultStats();
+        const { error: insertError } = await this.supabase
+          .from('users')
+          .insert({
+            username: cleanUser,
+            display_name: trimmedUser,
+            password_hash: this.hashPassword(password),
+            profile_image: null,
+            total_correct: stats.totalCorrect,
+            total_wrong: stats.totalWrong,
+            best_streak: stats.bestStreak,
+            best_height: stats.bestHeight,
+            best_lava_height: stats.bestLavaHeight,
+            games_played: stats.gamesPlayed,
+            lava_mode_used: stats.lavaModeUsed,
+            total_blocks_stacked: stats.totalBlocksStacked,
+            last_played: stats.lastPlayed,
+            created_at: new Date().toISOString(),
+            last_login: new Date().toISOString()
+          });
+        if (insertError) {
+          console.error('Register Supabase error, falling back to localStorage:', insertError);
+          this.useSupabase = false;
+        } else {
+          return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
+        }
       }
-      const stats = this.getDefaultStats();
-      const { error: insertError } = await this.supabase
-        .from('users')
-        .insert({
-          username: cleanUser,
-          display_name: trimmedUser,
-          password_hash: this.hashPassword(password),
-          profile_image: null,
-          total_correct: stats.totalCorrect,
-          total_wrong: stats.totalWrong,
-          best_streak: stats.bestStreak,
-          best_height: stats.bestHeight,
-          best_lava_height: stats.bestLavaHeight,
-          games_played: stats.gamesPlayed,
-          lava_mode_used: stats.lavaModeUsed,
-          total_blocks_stacked: stats.totalBlocksStacked,
-          last_played: stats.lastPlayed,
-          created_at: new Date().toISOString(),
-          last_login: new Date().toISOString()
-        });
-      if (insertError) {
-        console.error('Register Supabase error:', insertError);
-        return { success: false, message: '❌ Kon nie gebruiker registreer nie!' };
-      }
-      return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
-    } else {
-      const users = this._getFallbackUsers();
-      if (users[cleanUser]) {
-        return { success: false, message: `❌ Gebruikersnaam "${users[cleanUser].displayName}" bestaan reeds!` };
-      }
-      users[cleanUser] = {
-        displayName: trimmedUser,
-        password: this.hashPassword(password),
-        profileImage: null,
-        stats: this.getDefaultStats(),
-        created: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      };
-      this._saveFallbackUsers(users);
-      return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
     }
+    
+    // Fallback to localStorage
+    const users = this._getFallbackUsers();
+    if (users[cleanUser]) {
+      return { success: false, message: `❌ Gebruikersnaam "${users[cleanUser].displayName}" bestaan reeds!` };
+    }
+    users[cleanUser] = {
+      displayName: trimmedUser,
+      password: this.hashPassword(password),
+      profileImage: null,
+      stats: this.getDefaultStats(),
+      created: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
+    this._saveFallbackUsers(users);
+    return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
   }
+
   async login(username, password) {
     const cleanUser = username.trim().toLowerCase();
     if (this.useSupabase) {
@@ -1009,42 +1022,42 @@ class UserSystem {
         .select('*')
         .eq('username', cleanUser)
         .single();
-      if (error || !user) {
-        if (error) console.error('Login Supabase error:', error);
-        return { success: false, message: ' Gebruikersnaam bestaan nie!' };
+        
+      if (error) {
+        console.error('Login Supabase error, falling back to localStorage:', error);
+        this.useSupabase = false;
+      } else if (user) {
+        if (this.hashPassword(password) !== user.password_hash) return { success: false, message: '❌ Verkeerde wagwoord!' };
+        await this.supabase.from('users').update({ last_login: new Date().toISOString() }).eq('username', cleanUser).catch(e => console.error('Update last_login error:', e));
+        this.currentUser = cleanUser;
+        this.currentUserData = user;
+        localStorage.setItem('chemieCurrentUser', cleanUser);
+        const displayName = user.display_name || cleanUser;
+        return { success: true, message: `✅ Welkom terug, ${displayName}!` };
       }
-      if (this.hashPassword(password) !== user.password_hash) return { success: false, message: '❌ Verkeerde wagwoord!' };
-      const { error: updateError } = await this.supabase
-        .from('users')
-        .update({ last_login: new Date().toISOString() })
-        .eq('username', cleanUser);
-      if (updateError) console.error('Update last_login Supabase error:', updateError);
-      
-      this.currentUser = cleanUser;
-      this.currentUserData = user;
-      localStorage.setItem('chemieCurrentUser', cleanUser);
-      const displayName = user.display_name || cleanUser;
-      return { success: true, message: `✅ Welkom terug, ${displayName}!` };
-    } else {
-      const users = this._getFallbackUsers();
-      const user = users[cleanUser];
-      if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
-      if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
-      user.lastLogin = new Date().toISOString();
-      this._saveFallbackUsers(users);
-      this.currentUser = cleanUser;
-      this.currentUserData = user;
-      localStorage.setItem('chemieCurrentUser', cleanUser);
-      const displayName = user.displayName || cleanUser;
-      return { success: true, message: `✅ Welkom terug, ${displayName}!` };
     }
+    
+    // Fallback to localStorage
+    const users = this._getFallbackUsers();
+    const user = users[cleanUser];
+    if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
+    if (this.hashPassword(password) !== user.password) return { success: false, message: '❌ Verkeerde wagwoord!' };
+    user.lastLogin = new Date().toISOString();
+    this._saveFallbackUsers(users);
+    this.currentUser = cleanUser;
+    this.currentUserData = user;
+    localStorage.setItem('chemieCurrentUser', cleanUser);
+    const displayName = user.displayName || cleanUser;
+    return { success: true, message: `✅ Welkom terug, ${displayName}!` };
   }
+
   logout() {
     this.currentUser = null;
     this.currentUserData = null;
     localStorage.removeItem('chemieCurrentUser');
     return { success: true, message: '👋 Jy is uitgeteken!' };
   }
+
   async deleteAccount() {
     if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
     if (this.useSupabase) {
@@ -1053,17 +1066,22 @@ class UserSystem {
         .delete()
         .eq('username', this.currentUser);
       if (error) {
-        console.error('Delete account Supabase error:', error);
-        return { success: false, message: '❌ Kon nie rekening uitvee nie' };
+        console.error('Delete account Supabase error, falling back to localStorage:', error);
+        this.useSupabase = false;
+      } else {
+        this.logout();
+        return { success: true, message: '✅ Rekening suksesvol uitgevee' };
       }
-    } else {
-      const users = this._getFallbackUsers();
-      delete users[this.currentUser];
-      this._saveFallbackUsers(users);
     }
+    
+    // Fallback
+    const users = this._getFallbackUsers();
+    delete users[this.currentUser];
+    this._saveFallbackUsers(users);
     this.logout();
     return { success: true, message: '✅ Rekening suksesvol uitgevee' };
   }
+
   async updateProfileImage(imageData) {
     if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
     if (this.useSupabase) {
@@ -1072,19 +1090,23 @@ class UserSystem {
         .update({ profile_image: imageData })
         .eq('username', this.currentUser);
       if (error) {
-        console.error('Update profile image Supabase error:', error);
-        return { success: false, message: '❌ Kon nie foto stoor nie' };
+        console.error('Update profile image Supabase error, falling back to localStorage:', error);
+        this.useSupabase = false;
+      } else {
+        this.currentUserData.profile_image = imageData;
+        return { success: true, message: '✅ Foto opgedateer' };
       }
-      this.currentUserData.profile_image = imageData;
-    } else {
-      const users = this._getFallbackUsers();
-      if (!users[this.currentUser]) return { success: false, message: 'Gebruiker nie gevind nie' };
-      users[this.currentUser].profileImage = imageData;
-      this.currentUserData = users[this.currentUser];
-      this._saveFallbackUsers(users);
     }
+    
+    // Fallback
+    const users = this._getFallbackUsers();
+    if (!users[this.currentUser]) return { success: false, message: 'Gebruiker nie gevind nie' };
+    users[this.currentUser].profileImage = imageData;
+    this.currentUserData = users[this.currentUser];
+    this._saveFallbackUsers(users);
     return { success: true, message: '✅ Foto opgedateer' };
   }
+
   getUserStats() {
     if (!this.currentUser || !this.currentUserData) return null;
     if (this.useSupabase) {
@@ -1103,15 +1125,18 @@ class UserSystem {
       return this.currentUserData.stats || this.getDefaultStats();
     }
   }
+
   getDisplayName() {
     if (!this.currentUser || !this.currentUserData) return null;
     return this.useSupabase ? (this.currentUserData.display_name || this.currentUser) : (this.currentUserData.displayName || this.currentUser);
   }
+
   getProfileImage() {
     if (!this.currentUser || !this.currentUserData) return DEFAULT_AVATAR;
     const img = this.useSupabase ? this.currentUserData.profile_image : this.currentUserData.profileImage;
     return img || DEFAULT_AVATAR;
   }
+
   async updateUserStats(newStats) {
     if (!this.currentUser) return false;
     if (this.useSupabase) {
@@ -1131,20 +1156,23 @@ class UserSystem {
         .update(dbStats)
         .eq('username', this.currentUser);
       if (error) {
-        console.error('Update user stats Supabase error:', error);
-        return false;
+        console.error('Update user stats Supabase error, falling back to localStorage:', error);
+        this.useSupabase = false;
+      } else {
+        this.currentUserData = { ...this.currentUserData, ...dbStats };
+        return true;
       }
-      this.currentUserData = { ...this.currentUserData, ...dbStats };
-      return true;
-    } else {
-      const users = this._getFallbackUsers();
-      if (!users[this.currentUser]) return false;
-      users[this.currentUser].stats = { ...users[this.currentUser].stats, ...newStats };
-      this.currentUserData = users[this.currentUser];
-      this._saveFallbackUsers(users);
-      return true;
     }
+    
+    // Fallback
+    const users = this._getFallbackUsers();
+    if (!users[this.currentUser]) return false;
+    users[this.currentUser].stats = { ...users[this.currentUser].stats, ...newStats };
+    this.currentUserData = users[this.currentUser];
+    this._saveFallbackUsers(users);
+    return true;
   }
+
   getDefaultStats() {
     return {
       totalCorrect: 0,
@@ -1158,6 +1186,7 @@ class UserSystem {
       lastPlayed: new Date().toISOString(),
     };
   }
+
   hashPassword(password) {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
@@ -1167,6 +1196,7 @@ class UserSystem {
     }
     return hash.toString(36);
   }
+
   async getLeaderboard(sortBy = 'bestHeight', limit = 50) {
     if (this.useSupabase) {
       const sortMap = {
@@ -1182,47 +1212,50 @@ class UserSystem {
         .select('username, display_name, profile_image, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
         .order(dbSortBy, { ascending: false })
         .limit(limit);
+        
       if (error) {
-        console.error('Leaderboard Supabase error:', error);
-        return [];
+        console.error('Leaderboard Supabase error, falling back to localStorage:', error);
+        this.useSupabase = false;
+      } else if (data) {
+        return data.map(row => ({
+          username: row.username || 'onbekend',
+          displayName: row.display_name || row.username || 'Onbekend',
+          profileImage: row.profile_image,
+          stats: {
+            totalCorrect: row.total_correct || 0,
+            bestStreak: row.best_streak || 0,
+            bestHeight: row.best_height || 3,
+            bestLavaHeight: row.best_lava_height || 0,
+            gamesPlayed: row.games_played || 0
+          },
+          lastLogin: row.last_login
+        }));
       }
-      return data.map(row => ({
-        username: row.username || 'onbekend',
-        displayName: row.display_name || row.username || 'Onbekend',
-        profileImage: row.profile_image,
-        stats: {
-          totalCorrect: row.total_correct || 0,
-          bestStreak: row.best_streak || 0,
-          bestHeight: row.best_height || 3,
-          bestLavaHeight: row.best_lava_height || 0,
-          gamesPlayed: row.games_played || 0
-        },
-        lastLogin: row.last_login
-      }));
-    } else {
-      const users = this._getFallbackUsers();
-      const sortMap = {
-        'bestHeight': 'bestHeight',
-        'totalCorrect': 'totalCorrect',
-        'bestStreak': 'bestStreak',
-        'bestLavaHeight': 'bestLavaHeight',
-        'gamesPlayed': 'gamesPlayed'
-      };
-      const fallbackSortBy = sortMap[sortBy] || 'bestHeight';
-      const entries = Object.entries(users).map(([key, data]) => ({
-        username: key,
-        displayName: data.displayName || key,
-        profileImage: data.profileImage,
-        stats: data.stats || this.getDefaultStats(),
-        lastLogin: data.lastLogin,
-      }));
-      entries.sort((a, b) => {
-        const valA = a.stats[fallbackSortBy] || 0;
-        const valB = b.stats[fallbackSortBy] || 0;
-        return valB - valA;
-      });
-      return entries.slice(0, limit);
     }
+    
+    // Fallback to localStorage
+    const users = this._getFallbackUsers();
+    const sortMap = {
+      'bestHeight': 'bestHeight',
+      'totalCorrect': 'totalCorrect',
+      'bestStreak': 'bestStreak',
+      'bestLavaHeight': 'bestLavaHeight',
+      'gamesPlayed': 'gamesPlayed'
+    };
+    const fallbackSortBy = sortMap[sortBy] || 'bestHeight';
+    const entries = Object.entries(users).map(([key, data]) => ({
+      username: key,
+      displayName: data.displayName || key,
+      profileImage: data.profileImage,
+      stats: data.stats || this.getDefaultStats(),
+      lastLogin: data.lastLogin,
+    }));
+    entries.sort((a, b) => {
+      const valA = a.stats[fallbackSortBy] || 0;
+      const valB = b.stats[fallbackSortBy] || 0;
+      return valB - valA;
+    });
+    return entries.slice(0, limit);
   }
 }
 const userSystem = new UserSystem();
@@ -1241,7 +1274,6 @@ function hideProfilePopup() {
   document.getElementById('profilePopup').classList.remove('show');
 }
 
-// Profiel foto oplaai
 document.getElementById('profileImageInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -1257,7 +1289,6 @@ document.getElementById('profileImageInput').addEventListener('change', function
   reader.readAsDataURL(file);
 });
 
-// Stoor profiel
 document.getElementById('saveProfileBtn').addEventListener('click', async function() {
   const currentSrc = document.getElementById('profileImagePreview').src;
   const newImage = currentSrc !== DEFAULT_AVATAR ? currentSrc : null;
@@ -1275,14 +1306,9 @@ document.getElementById('saveProfileBtn').addEventListener('click', async functi
   setLoading('saveProfileBtn', false, '💾 Stoor Profiel');
 });
 
-// Vee rekening uit
 document.getElementById('deleteAccountBtn').addEventListener('click', async function() {
-  if (!confirm('⚠️ Is jy seker jy wil jou rekening uitvee? Dit kan nie ongedaan gemaak word nie!')) {
-    return;
-  }
-  if (!confirm('🚨 Laaste waarskuwing: Alle jou vordering sal verlore gaan!')) {
-    return;
-  }
+  if (!confirm('⚠️ Is jy seker jy wil jou rekening uitvee? Dit kan nie ongedaan gemaak word nie!')) return;
+  if (!confirm('🚨 Laaste waarskuwing: Alle jou vordering sal verlore gaan!')) return;
   setLoading('deleteAccountBtn', true, '🗑️ Vee Uit');
   const result = await userSystem.deleteAccount();
   if (result.success) {
@@ -1297,7 +1323,6 @@ document.getElementById('deleteAccountBtn').addEventListener('click', async func
   setLoading('deleteAccountBtn', false, '🗑️ Vee Rekening Uit');
 });
 
-// === OPDATEER PROFIEL KNOPPIE IN HEADER ===
 function updateProfileHeaderButton() {
   const container = document.getElementById('profileHeaderContainer');
   const btn = document.getElementById('profileHeaderBtn');
@@ -1559,7 +1584,7 @@ function loadUserStatsIntoGame() {
 // ================================================================
 //   CHEMIE VRAAGBANK
 // ================================================================
-    const CHEM_BANK = [
+const CHEM_BANK = [
     { display: "OH⁻", answer: "OH(-1)", name: "hidroksiedioon" },
     { display: "NO₃⁻", answer: "NO3(-1)", name: "nitraatioon" },
     { display: "NO₂⁻", answer: "NO2(-1)", name: "nitrietioon" },
@@ -1575,7 +1600,7 @@ function loadUserStatsIntoGame() {
     { display: "CO₃²⁻", answer: "CO3(-2)", name: "karbonaatioon" },
     { display: "CrO₄²⁻", answer: "CrO4(-2)", name: "chromaatioon" },
     { display: "Cr₂O₇²⁻", answer: "Cr2O7(-2)", name: "dichromaatioon" },
-    {display: "O₂²⁻", answer: "O2(-2)", name: "peroksiedioon" },
+    { display: "O₂²⁻", answer: "O2(-2)", name: "peroksiedioon" },
     { display: "PO₄³⁻", answer: "PO4(-3)", name: "fosfaatioon" },
     { display: "NH₄⁺", answer: "NH4(+1)", name: "ammoniumioon" },
     { display: "H₃O⁺", answer: "H3O(+1)", name: "hidroniumioon" },
@@ -1625,22 +1650,14 @@ let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
 let answerHistory = [];
 
 // ================================================================
-//   GAME LOGIC & AUTO-SAVE (USER SPECIFIC)
+//   GAME LOGIC & AUTO-SAVE
 // ================================================================
 function getSaveKey() {
   return `chemCurrentGame_${userSystem.currentUser || 'guest'}`;
 }
 function saveCurrentGame() {
   const gameState = {
-    stack: stack,
-    score: score,
-    streak: streak,
-    lives: lives,
-    isLavaMode: isLavaMode,
-    lavaLevel: lavaLevel,
-    currentQ: currentQ,
-    currentCorrect: currentCorrect,
-    answerHistory: answerHistory,
+    stack, score, streak, lives, isLavaMode, lavaLevel, currentQ, currentCorrect, answerHistory,
     timestamp: Date.now()
   };
   localStorage.setItem(getSaveKey(), JSON.stringify(gameState));
@@ -1725,11 +1742,8 @@ function initGame(resetLava = true, forceNew = false) {
             lavaStatus.style.display = 'none';
           }
           if (currentQ) {
-            if (currentQ.type === 'formula') {
-              qText.innerHTML = currentQ.display;
-            } else {
-              qText.textContent = currentQ.display;
-            }
+            if (currentQ.type === 'formula') qText.innerHTML = currentQ.display;
+            else qText.textContent = currentQ.display;
             qHint.textContent = currentQ.hint;
           } else {
             generateQuestion();
@@ -2607,7 +2621,6 @@ function drawCharacter(ctx, W, H, stackTopY) {
   ctx.fillRect(-3 * s, 0, 5 * s, 18 * s);
   ctx.restore();
   ctx.shadowBlur = 10;
-  // Default kop (geen foto op karakter nie - foto is in header)
   ctx.fillStyle = skinColor;
   ctx.beginPath(); ctx.arc(0, -26 * s, 16 * s, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = '#4a3728';
@@ -2774,18 +2787,21 @@ async function checkSession() {
         .select('*')
         .eq('username', savedUser)
         .single();
-      if (user && !error) {
+      if (error) {
+        console.error('Session restore Supabase error, falling back to localStorage:', error);
+        userSystem.useSupabase = false;
+      } else if (user) {
         userSystem.currentUser = savedUser;
         userSystem.currentUserData = user;
         updateUserUI();
         loadUserStatsIntoGame();
         setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
         return true;
-      } else {
-        if (error) console.error('Session restore Supabase error:', error);
-        localStorage.removeItem('chemieCurrentUser');
       }
-    } else {
+    }
+    
+    // Fallback
+    if (!userSystem.useSupabase || !userSystem.currentUser) {
       const users = userSystem._getFallbackUsers();
       if (users[savedUser]) {
         userSystem.currentUser = savedUser;
