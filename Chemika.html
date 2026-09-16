@@ -481,7 +481,7 @@
         .stats-row .num.blue { color: #60a5fa; }
         .stats-row .num.lava { color: #fb923c; }
         .stats-row .num.purple { color: #a78bfa; }
-        .stats-row .num.danger { color: #ef4444; } /* Added missing danger class */
+        .stats-row .num.danger { color: #ef4444; }
 
         .feedback-msg { font-size: 0.95rem; min-height: 28px; padding: 4px 6px; border-radius: 8px; transition: 0.2s; }
         .feedback-msg.correct { color: #4ade80; }
@@ -696,40 +696,6 @@
     </div>
 
     <script>
-        /*
-         * =====================================================================
-         * SUPABASE OPSTEL INSTRUKSIES:
-         * 1. Skep 'n nuwe projek op https://supabase.com
-         * 2. Gaan na die "SQL Editor" en voer die volgende query uit:
-         * 
-         * CREATE TABLE users (
-         *     username TEXT PRIMARY KEY,
-         *     display_name TEXT,
-         *     password_hash TEXT,
-         *     total_correct INT DEFAULT 0,
-         *     total_wrong INT DEFAULT 0,
-         *     best_streak INT DEFAULT 0,
-         *     best_height INT DEFAULT 3,
-         *     games_played INT DEFAULT 0,
-         *     lava_mode_used INT DEFAULT 0,
-         *     total_blocks_stacked INT DEFAULT 0,
-         *     last_played TIMESTAMPTZ DEFAULT NOW(),
-         *     created_at TIMESTAMPTZ DEFAULT NOW(),
-         *     last_login TIMESTAMPTZ DEFAULT NOW()
-         * );
-         * 
-         * 3. Stel Row Level Security (RLS) policies in vir openbare toegang:
-         *    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-         *    CREATE POLICY "Allow public read" ON users FOR SELECT USING (true);
-         *    CREATE POLICY "Allow public insert" ON users FOR INSERT WITH CHECK (true);
-         *    CREATE POLICY "Allow public update" ON users FOR UPDATE USING (true);
-         * 
-         * 4. Vervang 'YOUR_SUPABASE_URL' en 'YOUR_SUPABASE_ANON_KEY' hieronder.
-         *    (As jy dit nie doen nie, sal die speletjie outomaties terugval na 
-         *    localStorage sodat dit steeds 100% werk sonder enige foute.)
-         * =====================================================================
-         */
-
         // ================================================================
         //   HULP-FUNKSIES VIR UI
         // ================================================================
@@ -786,24 +752,19 @@
                 this.supabase = null;
                 this.storageKey = 'chemieUsers_v5';
 
-                const supabaseUrl = 'YOUR_SUPABASE_URL'; // Vervang dit
-                const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // Vervang dit
+                // Vervang hierdie met jou eie Supabase besonderhede
+                const supabaseUrl = 'YOUR_SUPABASE_URL'; 
+                const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; 
 
-                // Graceful degradation: val terug na localStorage as placeholders nog daar is
                 if (supabaseUrl !== 'YOUR_SUPABASE_URL' && supabaseUrl.startsWith('http')) {
                     try {
                         if (window.supabase) {
                             this.supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
                             this.useSupabase = true;
-                            console.log('✅ Supabase suksesvol geïnisialiseer.');
-                        } else {
-                            console.warn('⚠️ Supabase biblioteek nie gelaai nie. Val terug na localStorage.');
                         }
                     } catch (e) {
-                        console.warn('⚠️ Supabase inisialisasie het misluk, val terug na localStorage.', e);
+                        // Silent fail, fallback to localStorage
                     }
-                } else {
-                    console.warn('⚠️ Supabase placeholders gedektekteer. Val terug na localStorage vir gebruikerdata.');
                 }
             }
 
@@ -820,7 +781,7 @@
                 try {
                     localStorage.setItem(this.storageKey, JSON.stringify(users));
                 } catch (e) {
-                    console.error('❌ Fout met stoor van localStorage:', e);
+                    // Silent fail
                 }
             }
 
@@ -842,9 +803,7 @@
                     if (existingUser) {
                         return { success: false, message: `❌ Gebruikersnaam "${existingUser.username}" bestaan reeds!` };
                     }
-                    // PGRST116 is Supabase se "not found" kode, wat beteken die naam is beskikbaar
                     if (checkError && checkError.code !== 'PGRST116') {
-                        console.error('❌ Fout met kontrolering van gebruikersnaam:', checkError);
                         return { success: false, message: '❌ Kon nie gebruikersnaam kontroleer nie.' };
                     }
 
@@ -868,12 +827,10 @@
                         });
 
                     if (insertError) {
-                        console.error('❌ Fout met registrasie:', insertError);
                         return { success: false, message: '❌ Kon nie gebruiker registreer nie!' };
                     }
                     return { success: true, message: `✅ Registrasie suksesvol! Welkom, ${trimmedUser}!` };
                 } else {
-                    // Fallback localStorage
                     const users = this._getFallbackUsers();
                     if (users[cleanUser]) {
                         return { success: false, message: `❌ Gebruikersnaam "${users[cleanUser].displayName}" bestaan reeds!` };
@@ -915,7 +872,6 @@
                     const displayName = user.display_name || cleanUser;
                     return { success: true, message: `✅ Welkom terug, ${displayName}!` };
                 } else {
-                    // Fallback localStorage
                     const users = this._getFallbackUsers();
                     const user = users[cleanUser];
                     
@@ -984,10 +940,7 @@
                         .update(dbStats)
                         .eq('username', this.currentUser);
 
-                    if (error) {
-                        console.error('❌ Fout met stoor van stats:', error);
-                        return false;
-                    }
+                    if (error) return false;
                     this.currentUserData = { ...this.currentUserData, ...dbStats };
                     return true;
                 } else {
@@ -1039,14 +992,11 @@
                         .order(dbSortBy, { ascending: false })
                         .limit(limit);
 
-                    if (error) {
-                        console.error('❌ Fout met laai van ranglys:', error);
-                        return [];
-                    }
+                    if (error) return [];
 
                     return data.map(row => ({
-                        username: row.username,
-                        displayName: row.display_name || row.username,
+                        username: row.username || 'onbekend',
+                        displayName: row.display_name || row.username || 'Onbekend',
                         stats: {
                             totalCorrect: row.total_correct || 0,
                             bestStreak: row.best_streak || 0,
@@ -1065,8 +1015,9 @@
                     };
                     const fallbackSortBy = sortMap[sortBy] || 'bestHeight';
 
-                    const entries = Object.entries(users).map(([username, data]) => ({
-                        username: data.displayName || username,
+                    const entries = Object.entries(users).map(([key, data]) => ({
+                        username: key,
+                        displayName: data.displayName || key,
                         stats: data.stats || this.getDefaultStats(),
                         lastLogin: data.lastLogin,
                     }));
@@ -1121,7 +1072,7 @@
             const list = document.getElementById('leaderboardList');
             const leaderboard = await userSystem.getLeaderboard(sortBy, 50);
 
-            if (leaderboard.length === 0) {
+            if (!leaderboard || leaderboard.length === 0) {
                 list.innerHTML = '<div class="leaderboard-empty">🎮 Geen spelers nog nie.<br>Speel om op die ranglys te verskyn!</div>';
                 return;
             }
@@ -1135,12 +1086,13 @@
                 
                 const value = entry.stats[sortBy] || 0;
                 const lastPlayed = entry.lastLogin ? new Date(entry.lastLogin).toLocaleDateString('af-ZA') : 'Onbekend';
+                const displayName = entry.displayName || entry.username || 'Onbekend';
 
                 html += `
                     <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
                         <div class="leaderboard-rank ${rankClass}">${medal}</div>
                         <div class="leaderboard-info">
-                            <div class="leaderboard-name">${entry.displayName} ${isCurrentUser ? '(Jy)' : ''}</div>
+                            <div class="leaderboard-name">${displayName} ${isCurrentUser ? '(Jy)' : ''}</div>
                             <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
                         </div>
                         <div class="leaderboard-value">${value}</div>
@@ -1372,8 +1324,27 @@
         let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
 
         // ================================================================
-        //   GAME LOGIC
+        //   GAME LOGIC & AUTO-SAVE
         // ================================================================
+        function saveCurrentGame() {
+            const gameState = {
+                stack: stack,
+                score: score,
+                streak: streak,
+                lives: lives,
+                isLavaMode: isLavaMode,
+                lavaLevel: lavaLevel,
+                currentQ: currentQ,
+                currentCorrect: currentCorrect,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('chemCurrentGame', JSON.stringify(gameState));
+        }
+
+        function clearCurrentGame() {
+            localStorage.removeItem('chemCurrentGame');
+        }
+
         function loadBestHeight() {
             try {
                 const val = localStorage.getItem('chemStackBestHeight');
@@ -1418,7 +1389,59 @@
             return ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#10b981', '#6366f1', '#f472b6', '#34d399', '#60a5fa', '#a78bfa'];
         }
 
-        function initGame(resetLava = true) {
+        function initGame(resetLava = true, forceNew = false) {
+            if (!forceNew) {
+                const saved = localStorage.getItem('chemCurrentGame');
+                if (saved) {
+                    try {
+                        const state = JSON.parse(saved);
+                        if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
+                            stack = state.stack || [];
+                            score = state.score || 0;
+                            streak = state.streak || 0;
+                            lives = state.lives !== undefined ? state.lives : MAX_LIVES;
+                            isLavaMode = state.isLavaMode || false;
+                            lavaLevel = state.lavaLevel !== undefined ? state.lavaLevel : GROUND_Y;
+                            currentQ = state.currentQ || null;
+                            currentCorrect = state.currentCorrect || '';
+                            
+                            if (isLavaMode) {
+                                lavaBtn.textContent = '🌋 Lava: AAN';
+                                lavaBtn.classList.add('active');
+                                lavaStatus.style.display = 'inline';
+                            } else {
+                                lavaBtn.textContent = '🌋 Lava Mode';
+                                lavaBtn.classList.remove('active');
+                                lavaStatus.style.display = 'none';
+                            }
+                            
+                            if (currentQ) {
+                                if (currentQ.type === 'formula') {
+                                    qText.innerHTML = currentQ.display;
+                                } else {
+                                    qText.textContent = currentQ.display;
+                                }
+                                qHint.textContent = currentQ.hint;
+                            } else {
+                                generateQuestion();
+                            }
+
+                            gameOverOverlay.classList.remove('show');
+                            updateStats();
+                            draw();
+                            answerInput.disabled = false;
+                            answerInput.value = '';
+                            answerInput.focus();
+                            feedbackMsg.className = 'feedback-msg info';
+                            feedbackMsg.textContent = isLavaMode ? '🌋 LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
+                            return;
+                        }
+                    } catch (e) {
+                        // Silent fail, proceed to new game
+                    }
+                }
+            }
+            
             const colors = getColorPalette();
             stack = [];
             for (let i = 0; i < START_BLOCKS; i++) stack.push(colors[i % colors.length]);
@@ -1454,6 +1477,7 @@
                 });
             }
 
+            clearCurrentGame();
             gameOverOverlay.classList.remove('show');
             updateStats();
             generateQuestion();
@@ -1587,6 +1611,7 @@
                     answerInput.disabled = false;
                     answerInput.focus();
                     newBlockAnim = 0; charScale = 1;
+                    saveCurrentGame();
                     draw();
                 }, 400);
 
@@ -1611,6 +1636,7 @@
                         generateQuestion();
                         answerInput.disabled = false;
                         answerInput.focus();
+                        saveCurrentGame();
                         draw();
                     }, 700);
                 } else {
@@ -1629,6 +1655,7 @@
                                 isGameOver = true; charFalling = true; fallVelocity = 0; fallRotation = 0;
                                 answerInput.disabled = true; submitBtn.disabled = true;
                                 updateBestHeight();
+                                clearCurrentGame();
                                 finalScore.textContent = score;
                                 finalBlocks.textContent = stack.length;
                                 finalStreak.textContent = bestStreak;
@@ -1645,6 +1672,7 @@
                                 generateQuestion();
                                 answerInput.disabled = false;
                                 answerInput.focus();
+                                saveCurrentGame();
                                 draw();
                             }, 800);
                         }
@@ -1682,10 +1710,12 @@
                     feedbackMsg.className = 'feedback-msg heart-loss';
                     feedbackMsg.textContent = `🌋 Lava het jou gebrand! ❤️ × ${lives}`;
                     updateStats();
+                    saveCurrentGame();
                     if (lives === 0) {
                         isGameOver = true; charFalling = true; fallVelocity = 0; fallRotation = 0;
                         answerInput.disabled = true; submitBtn.disabled = true;
                         updateBestHeight();
+                        clearCurrentGame();
                         setTimeout(() => {
                             finalScore.textContent = score; finalBlocks.textContent = stack.length;
                             finalStreak.textContent = bestStreak; finalBestHeight.textContent = bestHeight;
@@ -1701,6 +1731,7 @@
                     feedbackMsg.className = 'feedback-msg wrong';
                     feedbackMsg.textContent = '🌋 Die lawa het jou verbrand!';
                     updateBestHeight();
+                    clearCurrentGame();
                     setTimeout(() => {
                         finalScore.textContent = score; finalBlocks.textContent = stack.length;
                         finalStreak.textContent = bestStreak; finalBestHeight.textContent = bestHeight;
@@ -2461,7 +2492,7 @@
                 lavaBtn.classList.add('active');
                 lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaTime = 0; lavaBubbles = [];
                 if (animFrame) cancelAnimationFrame(animFrame);
-                initGame(false);
+                initGame(false, true);
                 gameLoop();
                 feedbackMsg.className = 'feedback-msg lava-warning';
                 feedbackMsg.textContent = '🌋 LAVA MODE! 3 harte • Antwoord vinnig!';
@@ -2470,7 +2501,7 @@
                 lavaBtn.classList.remove('active');
                 lavaStatus.style.display = 'none';
                 if (animFrame) cancelAnimationFrame(animFrame);
-                initGame(true);
+                initGame(true, true);
                 gameLoop();
                 feedbackMsg.className = 'feedback-msg info';
                 feedbackMsg.textContent = '💡 3 harte • Tik jou antwoord en druk Enter';
@@ -2481,12 +2512,7 @@
         function restartGame() {
             if (animFrame) cancelAnimationFrame(animFrame);
             loadBestHeight();
-            if (isLavaMode) {
-                initGame(false);
-                lavaLevel = GROUND_Y; lavaSpeed = 0.05; lavaBubbles = [];
-            } else {
-                initGame(true);
-            }
+            initGame(true, true);
             gameLoop();
             answerInput.focus();
         }
@@ -2500,7 +2526,7 @@
                 lavaBtn.classList.remove('active');
                 lavaStatus.style.display = 'none';
             }
-            initGame(true);
+            initGame(true, true);
             gameLoop();
             answerInput.focus();
         }
@@ -2538,21 +2564,18 @@
                         userSystem.currentUserData = user;
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        console.log('✅ Session herstel vir gebruiker:', userSystem.getDisplayName());
                         setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
                         return true;
                     } else {
                         localStorage.removeItem('chemieCurrentUser');
                     }
                 } else {
-                    // Fallback localStorage session restore
                     const users = userSystem._getFallbackUsers();
                     if (users[savedUser]) {
                         userSystem.currentUser = savedUser;
                         userSystem.currentUserData = users[savedUser];
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        console.log('✅ Session herstel vir gebruiker:', userSystem.getDisplayName());
                         setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
                         return true;
                     } else {
@@ -2560,16 +2583,12 @@
                     }
                 }
             }
-            console.log('ℹ️ Geen aktiewe session gevind nie');
             return false;
         }
 
         // ================================================================
         //   INITIALISASIE
         // ================================================================
-        console.log('🎮 Blok Stapel Chemie word gelaai...');
-        console.log('☁️ UserSystem geïnisialiseer (Supabase: ' + (userSystem.useSupabase ? 'Aktief' : 'LocalStorage Fallback') + ')');
-        
         loadBestHeight();
         initGame(true);
         gameLoop();
@@ -2577,7 +2596,6 @@
         
         setTimeout(checkSession, 200);
 
-        console.log('✅ Blok Stapel Chemie suksesvol gelaai!');
         window.userSystem = userSystem;
     </script>
 </body>
