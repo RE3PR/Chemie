@@ -404,6 +404,27 @@
             font-size: 0.95rem;
         }
 
+        /* --- GESKIEDENIS STYL --- */
+        .history-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px 16px;
+            background: #0f172a;
+            border-radius: 12px;
+            border: 1px solid #1e293b;
+            margin-bottom: 8px;
+            transition: 0.15s;
+        }
+        .history-item:hover { background: #1e293b; border-color: #334155; }
+        .history-item.correct { border-left: 4px solid #4ade80; }
+        .history-item.wrong { border-left: 4px solid #f87171; }
+        .history-q { font-weight: 600; color: #e2e8f0; font-size: 1rem; word-break: break-word; }
+        .history-ans { font-size: 0.9rem; color: #94a3b8; word-break: break-word; }
+        .history-ans .user-ans-wrong { color: #f87171; text-decoration: line-through; margin-right: 8px; }
+        .history-ans .correct-ans { color: #4ade80; font-weight: 600; }
+        .history-ans .correct-ans-only { color: #4ade80; font-weight: 600; }
+
         .game-wrapper {
             width: 100%;
             background: #111827;
@@ -651,6 +672,18 @@
             </div>
         </div>
 
+        <div class="popup-overlay" id="historyPopup">
+            <div class="popup-box wide" id="historyBox">
+                <button class="close-btn" id="closeHistoryPopup">✕</button>
+                <h2>📜 Antwoord Geskiedenis</h2>
+                <p class="subtitle">Jou vorige antwoorde in hierdie speletjie</p>
+                <div class="leaderboard-list" id="historyList" style="max-height: 500px;"></div>
+                <div class="btn-group" style="margin-top: 20px; justify-content: center;">
+                    <button class="btn btn-secondary" id="closeHistoryBtn">Maak Toe</button>
+                </div>
+            </div>
+        </div>
+
         <div class="game-wrapper" id="app">
             <div class="canvas-wrap" id="canvasWrap">
                 <canvas id="gameCanvas" width="800" height="480"></canvas>
@@ -683,6 +716,7 @@
                            autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
                     <button class="btn btn-primary" id="submitBtn">⏎ Submit</button>
                     <button class="btn btn-lava" id="lavaBtn">🌋 Lava Mode</button>
+                    <button class="btn btn-outline" id="historyBtn">📜 Geskiedenis</button>
                 </div>
                 <div class="feedback-msg info" id="feedbackMsg">💡 Tik jou antwoord en druk Enter</div>
                 <div class="stats-row">
@@ -773,6 +807,12 @@
             const errorEl = document.getElementById(elementId);
             errorEl.textContent = '';
             errorEl.classList.remove('show');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // ================================================================
@@ -1108,6 +1148,15 @@
             document.getElementById('leaderboardPopup').classList.remove('show');
         }
 
+        function showHistoryPopup() {
+            renderHistory();
+            document.getElementById('historyPopup').classList.add('show');
+        }
+
+        function hideHistoryPopup() {
+            document.getElementById('historyPopup').classList.remove('show');
+        }
+
         async function renderLeaderboard(sortBy) {
             const list = document.getElementById('leaderboardList');
             const leaderboard = await userSystem.getLeaderboard(sortBy, 50);
@@ -1140,6 +1189,32 @@
                 `;
             });
 
+            list.innerHTML = html;
+        }
+
+        function renderHistory() {
+            const list = document.getElementById('historyList');
+            if (answerHistory.length === 0) {
+                list.innerHTML = '<div class="leaderboard-empty">🎮 Nog geen antwoorde in hierdie speletjie nie.</div>';
+                return;
+            }
+            let html = '';
+            answerHistory.forEach((item) => {
+                const statusClass = item.isCorrect ? 'correct' : 'wrong';
+                const statusIcon = item.isCorrect ? '✅' : '❌';
+                let ansHtml = '';
+                if (item.isCorrect) {
+                    ansHtml = `<span class="correct-ans-only">${escapeHtml(item.userAnswer)}</span>`;
+                } else {
+                    ansHtml = `<span class="user-ans-wrong">${escapeHtml(item.userAnswer)}</span> ➔ <span class="correct-ans">${escapeHtml(item.correctAnswer)}</span>`;
+                }
+                html += `
+                    <div class="history-item ${statusClass}">
+                        <div class="history-q">${statusIcon} ${escapeHtml(item.question)}</div>
+                        <div class="history-ans">Jou antwoord: ${ansHtml}</div>
+                    </div>
+                `;
+            });
             list.innerHTML = html;
         }
 
@@ -1183,6 +1258,9 @@
         document.getElementById('closeRegisterPopup').addEventListener('click', hideRegisterPopup);
         document.getElementById('registerCancelBtn').addEventListener('click', hideRegisterPopup);
         document.getElementById('closeLeaderboardPopup').addEventListener('click', hideLeaderboardPopup);
+        document.getElementById('closeHistoryPopup').addEventListener('click', hideHistoryPopup);
+        document.getElementById('closeHistoryBtn').addEventListener('click', hideHistoryPopup);
+        document.getElementById('historyBtn').addEventListener('click', showHistoryPopup);
 
         document.getElementById('switchToRegister').addEventListener('click', () => { hideLoginPopup(); setTimeout(showRegisterPopup, 200); });
         document.getElementById('switchToLogin').addEventListener('click', () => { hideRegisterPopup(); setTimeout(showLoginPopup, 200); });
@@ -1313,6 +1391,7 @@
             { display: "CO₃²⁻", answer: "CO3(-2)", name: "karbonaatioon" },
             { display: "CrO₄²⁻", answer: "CrO4(-2)", name: "chromaatioon" },
             { display: "Cr₂O₇²⁻", answer: "Cr2O7(-2)", name: "dichromaatioon" },
+            { display: "O₂²⁻", answer: "O2(-2)", name: "peroksiedioon" },
             { display: "PO₄³⁻", answer: "PO4(-3)", name: "fosfaatioon" },
             { display: "NH₄⁺", answer: "NH4(+1)", name: "ammoniumioon" },
             { display: "H₃O⁺", answer: "H3O(+1)", name: "hidroniumioon" },
@@ -1361,6 +1440,7 @@
         let heartLossIndex = -1, heartLossTimer = 0, HEART_LOSS_DURATION = 40;
         let heartParticles = [], blockParticles = [];
         let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
+        let answerHistory = [];
 
         // ================================================================
         //   GAME LOGIC & AUTO-SAVE
@@ -1440,6 +1520,8 @@
         }
 
         function initGame(resetLava = true, forceNew = false) {
+            answerHistory = []; // Reset geskiedenis vir nuwe speletjie
+            
             if (!forceNew) {
                 const saved = localStorage.getItem('chemCurrentGame');
                 if (saved) {
@@ -1618,6 +1700,14 @@
             const userAns = raw.toLowerCase();
             const correct = currentCorrect.toLowerCase();
             const ok = (userAns === correct);
+
+            // Stoor antwoord in geskiedenis
+            answerHistory.unshift({
+                question: currentQ.display,
+                userAnswer: raw,
+                correctAnswer: currentCorrect,
+                isCorrect: ok
+            });
 
             if (ok) {
                 score++; streak++;
