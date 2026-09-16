@@ -1293,7 +1293,8 @@
                 hideLoginPopup();
                 updateUserUI();
                 loadUserStatsIntoGame();
-                if (typeof restartGame === 'function') restartGame();
+                // HERVAT die speletjie in plaas van om van voor af te begin
+                if (typeof resumeGame === 'function') resumeGame();
                 feedbackMsg.className = 'feedback-msg correct';
                 feedbackMsg.textContent = result.message;
             } else {
@@ -1323,7 +1324,7 @@
                 if (loginResult.success) {
                     updateUserUI();
                     loadUserStatsIntoGame();
-                    if (typeof restartGame === 'function') restartGame();
+                    if (typeof resumeGame === 'function') resumeGame();
                     feedbackMsg.className = 'feedback-msg correct';
                     feedbackMsg.textContent = loginResult.message;
                 }
@@ -1354,6 +1355,7 @@
         document.getElementById('logoutBtn').addEventListener('click', () => {
             userSystem.logout();
             updateUserUI();
+            // Begin 'n vars speletjie vir die volgende gebruiker
             if (typeof restartGame === 'function') restartGame();
             feedbackMsg.className = 'feedback-msg info';
             feedbackMsg.textContent = '👋 Jy is uitgeteken!';
@@ -1443,8 +1445,12 @@
         let answerHistory = [];
 
         // ================================================================
-        //   GAME LOGIC & AUTO-SAVE
+        //   GAME LOGIC & AUTO-SAVE (USER SPECIFIC)
         // ================================================================
+        function getSaveKey() {
+            return `chemCurrentGame_${userSystem.currentUser || 'guest'}`;
+        }
+
         function saveCurrentGame() {
             const gameState = {
                 stack: stack,
@@ -1455,13 +1461,14 @@
                 lavaLevel: lavaLevel,
                 currentQ: currentQ,
                 currentCorrect: currentCorrect,
+                answerHistory: answerHistory, // Stoor ook die geskiedenis
                 timestamp: Date.now()
             };
-            localStorage.setItem('chemCurrentGame', JSON.stringify(gameState));
+            localStorage.setItem(getSaveKey(), JSON.stringify(gameState));
         }
 
         function clearCurrentGame() {
-            localStorage.removeItem('chemCurrentGame');
+            localStorage.removeItem(getSaveKey());
         }
 
         function loadBestHeight() {
@@ -1520,13 +1527,14 @@
         }
 
         function initGame(resetLava = true, forceNew = false) {
-            answerHistory = []; // Reset geskiedenis vir nuwe speletjie
+            const saveKey = getSaveKey();
             
             if (!forceNew) {
-                const saved = localStorage.getItem('chemCurrentGame');
+                const saved = localStorage.getItem(saveKey);
                 if (saved) {
                     try {
                         const state = JSON.parse(saved);
+                        // Herlaai slegs as dit minder as 24 uur oud is
                         if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
                             stack = state.stack || [];
                             score = state.score || 0;
@@ -1536,6 +1544,7 @@
                             lavaLevel = state.lavaLevel !== undefined ? state.lavaLevel : GROUND_Y;
                             currentQ = state.currentQ || null;
                             currentCorrect = state.currentCorrect || '';
+                            answerHistory = state.answerHistory || []; // Herlaai geskiedenis
                             
                             if (isLavaMode) {
                                 lavaBtn.textContent = '🌋 Lava: AAN';
@@ -1574,6 +1583,8 @@
                 }
             }
             
+            // As ons hier kom, begin ons 'n nuwe speletjie
+            answerHistory = []; // Reset geskiedenis vir nuwe speletjie
             const colors = getColorPalette();
             stack = [];
             for (let i = 0; i < START_BLOCKS; i++) stack.push(colors[i % colors.length]);
@@ -1796,7 +1807,7 @@
                                 isGameOver = true; charFalling = true; fallVelocity = 0; fallRotation = 0;
                                 answerInput.disabled = true; submitBtn.disabled = true;
                                 updateBestHeight();
-                                clearCurrentGame();
+                                clearCurrentGame(); // Veë die gestoorde speletjie uit
                                 finalScore.textContent = score;
                                 finalBlocks.textContent = stack.length;
                                 finalStreak.textContent = bestStreak;
@@ -2650,9 +2661,19 @@
             answerInput.focus();
         }
 
+        // Nuwe funksie om speletjie te hervat sonder om dit te reset
+        function resumeGame() {
+            if (animFrame) cancelAnimationFrame(animFrame);
+            loadBestHeight();
+            initGame(false, false); // forceNew = false, laat dit laai uit localStorage
+            gameLoop();
+            answerInput.focus();
+        }
+
         function restartGame() {
             if (animFrame) cancelAnimationFrame(animFrame);
             loadBestHeight();
+            clearCurrentGame(); // Veë die ou gestoorde speletjie uit
             initGame(true, true);
             gameLoop();
             answerInput.focus();
@@ -2667,6 +2688,7 @@
                 lavaBtn.classList.remove('active');
                 lavaStatus.style.display = 'none';
             }
+            clearCurrentGame();
             initGame(true, true);
             gameLoop();
             answerInput.focus();
@@ -2674,6 +2696,7 @@
 
         window.restartGame = restartGame;
         window.quitGame = quitGame;
+        window.resumeGame = resumeGame;
 
         submitBtn.addEventListener('click', handleAnswer);
         lavaBtn.addEventListener('click', toggleLavaMode);
@@ -2705,7 +2728,8 @@
                         userSystem.currentUserData = user;
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
+                        // HERVAT die speletjie in plaas van restartGame()
+                        setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
                         return true;
                     } else {
                         localStorage.removeItem('chemieCurrentUser');
@@ -2717,7 +2741,8 @@
                         userSystem.currentUserData = users[savedUser];
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
+                        // HERVAT die speletjie in plaas van restartGame()
+                        setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
                         return true;
                     } else {
                         localStorage.removeItem('chemieCurrentUser');
