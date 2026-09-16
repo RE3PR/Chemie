@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>🧱 Blok Stapel • Chemie • Harte</title>
+    <title> Blok Stapel • Chemie • Harte</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -85,6 +85,12 @@
             box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
         }
         .btn-gold:hover { transform: scale(1.02); box-shadow: 0 6px 16px rgba(251, 191, 36, 0.4); }
+
+        .btn-profile {
+            background: #6366f1;
+            color: white;
+        }
+        .btn-profile:hover { background: #4f46e5; }
 
         #userStatus {
             margin-top: 8px;
@@ -256,6 +262,8 @@
         .popup-box .btn-group .btn-secondary:hover { background: #1e293b; }
         .popup-box .btn-group .btn-success { background: #16a34a; color: white; }
         .popup-box .btn-group .btn-success:hover { background: #15803d; }
+        .popup-box .btn-group .btn-danger { background: #dc2626; color: white; }
+        .popup-box .btn-group .btn-danger:hover { background: #b91c1c; }
 
         .btn-loading { opacity: 0.7; pointer-events: none; }
         .spinner {
@@ -315,6 +323,55 @@
             font-weight: 600;
         }
         .popup-box .switch-action a:hover { text-decoration: underline; }
+
+        /* Profiel foto styl */
+        .profile-section {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .profile-image-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 16px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #3b82f6;
+            background: #1e293b;
+        }
+
+        .profile-image-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #3b82f6;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: 0.15s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .profile-image-upload:hover {
+            background: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .profile-image-upload input {
+            display: none;
+        }
 
         .leaderboard-tabs {
             display: flex;
@@ -537,6 +594,47 @@
         .stats-extra span { display: flex; align-items: center; gap: 4px; }
         .stats-extra .num { font-weight: 600; color: #e2e8f0; }
 
+        /* Profiel knoppie bo links */
+        .profile-btn-container {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 10;
+        }
+
+        .profile-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 3px solid #3b82f6;
+            background: #1e293b;
+            cursor: pointer;
+            overflow: hidden;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .profile-btn:hover {
+            transform: scale(1.1);
+            border-color: #60a5fa;
+        }
+
+        .profile-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-btn .default-avatar {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: #3b82f6;
+        }
+
         @media (max-width: 600px) {
             .game-wrapper { padding: 12px; }
             .question-row .q-label { font-size: 1.2rem; }
@@ -553,6 +651,8 @@
             .leaderboard-item { padding: 10px 12px; gap: 8px; }
             .leaderboard-rank { font-size: 1.2rem; min-width: 32px; }
             .leaderboard-value { font-size: 1.1rem; }
+            .profile-btn-container { top: 12px; left: 12px; }
+            .profile-btn { width: 40px; height: 40px; }
         }
 
         @media (max-width: 400px) {
@@ -575,8 +675,8 @@
         <div id="userSystem">
             <div id="userLoginForm">
                 <span id="currentUserDisplay" style="flex:1; color:#94a3b8; font-size:0.95rem; text-align:center;">👤 Nie ingeteken nie</span>
-                <button class="btn btn-gold" id="showLeaderboardBtn">🏆 Ranglys</button>
-                <button class="btn btn-primary" id="showLoginBtn">🔓 Teken In</button>
+                <button class="btn btn-gold" id="showLeaderboardBtn"> Ranglys</button>
+                <button class="btn btn-primary" id="showLoginBtn"> Teken In</button>
                 <button class="btn btn-outline" id="showRegisterBtn">📝 Registreer</button>
                 <button class="btn btn-danger" id="logoutBtn" style="display:none;">🚪 Teken Uit</button>
             </div>
@@ -684,7 +784,44 @@
             </div>
         </div>
 
+        <div class="popup-overlay" id="profilePopup">
+            <div class="popup-box" id="profileBox">
+                <button class="close-btn" id="closeProfilePopup">✕</button>
+                <h2> Profiel</h2>
+                <p class="subtitle">Bestuur jou profiel en rekening</p>
+                
+                <div class="profile-section">
+                    <div class="profile-image-container">
+                        <img id="profileImagePreview" class="profile-image" src="" alt="Profiel foto">
+                        <label class="profile-image-upload" title="Laai foto op">
+                            📷
+                            <input type="file" id="profileImageInput" accept="image/*" />
+                        </label>
+                    </div>
+                    <p style="color: #94a3b8; font-size: 0.85rem;">Klik op die kamera om 'n foto op te laai</p>
+                </div>
+
+                <div class="input-group">
+                    <label>👤 Gebruikersnaam</label>
+                    <input type="text" id="profileUsername" readonly style="background: #0f172a; color: #94a3b8;" />
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="saveProfileBtn">💾 Stoor Profiel</button>
+                    <button class="btn btn-danger" id="deleteAccountBtn">️ Vee Rekening Uit</button>
+                </div>
+                <div class="error-msg" id="profileError"></div>
+            </div>
+        </div>
+
         <div class="game-wrapper" id="app">
+            <!-- Profiel knoppie bo links -->
+            <div class="profile-btn-container" id="profileBtnContainer" style="display:none;">
+                <button class="profile-btn" id="profileBtn" title="Profiel">
+                    <div class="default-avatar">👤</div>
+                </button>
+            </div>
+
             <div class="canvas-wrap" id="canvasWrap">
                 <canvas id="gameCanvas" width="800" height="480"></canvas>
                 <div class="game-over-overlay" id="gameOverOverlay">
@@ -723,7 +860,7 @@
                     <span>✅ Korrek: <span class="num green" id="scoreDisplay">0</span></span>
                     <span>🔥 Reeks: <span class="num gold" id="streakDisplay">0</span></span>
                     <span>📦 Hoogte: <span class="num blue" id="heightDisplay">3</span></span>
-                    <span>🏔️ Beste: <span class="num purple" id="bestHeightDisplay">3</span></span>
+                    <span>️ Beste: <span class="num purple" id="bestHeightDisplay">3</span></span>
                     <span id="lavaStatus" style="display:none;">🌋 <span class="num lava" id="lavaLevelDisplay">0</span></span>
                 </div>
             </div>
@@ -741,6 +878,7 @@
          *     username TEXT PRIMARY KEY,
          *     display_name TEXT,
          *     password_hash TEXT,
+         *     profile_image TEXT,
          *     total_correct INT DEFAULT 0,
          *     total_wrong INT DEFAULT 0,
          *     best_streak INT DEFAULT 0,
@@ -815,6 +953,9 @@
             return div.innerHTML;
         }
 
+        // Default profiel prentjie (base64 encoded simple avatar)
+        const DEFAULT_AVATAR = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI2MCIgZmlsbD0iIzNiODJmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjQ4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPvCfkqQ8L3RleHQ+PC9zdmc+';
+
         // ================================================================
         //   GEBRUIKER STELSEL (Supabase met localStorage fallback)
         // ================================================================
@@ -824,7 +965,7 @@
                 this.currentUserData = null;
                 this.useSupabase = false;
                 this.supabase = null;
-                this.storageKey = 'chemieUsers_v5';
+                this.storageKey = 'chemieUsers_v6';
 
                 const supabaseUrl = 'YOUR_SUPABASE_URL'; 
                 const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; 
@@ -887,6 +1028,7 @@
                             username: cleanUser,
                             display_name: trimmedUser,
                             password_hash: this.hashPassword(password),
+                            profile_image: null,
                             total_correct: stats.totalCorrect,
                             total_wrong: stats.totalWrong,
                             best_streak: stats.bestStreak,
@@ -912,6 +1054,7 @@
                     users[cleanUser] = {
                         displayName: trimmedUser,
                         password: this.hashPassword(password),
+                        profileImage: null,
                         stats: this.getDefaultStats(),
                         created: new Date().toISOString(),
                         lastLogin: new Date().toISOString(),
@@ -967,7 +1110,48 @@
                 this.currentUser = null;
                 this.currentUserData = null;
                 localStorage.removeItem('chemieCurrentUser');
-                return { success: true, message: '👋 Jy is uitgeteken!' };
+                return { success: true, message: ' Jy is uitgeteken!' };
+            }
+
+            async deleteAccount() {
+                if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
+
+                if (this.useSupabase) {
+                    const { error } = await this.supabase
+                        .from('users')
+                        .delete()
+                        .eq('username', this.currentUser);
+
+                    if (error) return { success: false, message: '❌ Kon nie rekening uitvee nie' };
+                } else {
+                    const users = this._getFallbackUsers();
+                    delete users[this.currentUser];
+                    this._saveFallbackUsers(users);
+                }
+
+                this.logout();
+                return { success: true, message: '✅ Rekening suksesvol uitgevee' };
+            }
+
+            async updateProfileImage(imageData) {
+                if (!this.currentUser) return { success: false, message: 'Geen gebruiker ingeteken nie' };
+
+                if (this.useSupabase) {
+                    const { error } = await this.supabase
+                        .from('users')
+                        .update({ profile_image: imageData })
+                        .eq('username', this.currentUser);
+
+                    if (error) return { success: false, message: '❌ Kon nie foto stoor nie' };
+                    this.currentUserData.profile_image = imageData;
+                } else {
+                    const users = this._getFallbackUsers();
+                    if (!users[this.currentUser]) return { success: false, message: 'Gebruiker nie gevind nie' };
+                    users[this.currentUser].profileImage = imageData;
+                    this.currentUserData = users[this.currentUser];
+                    this._saveFallbackUsers(users);
+                }
+                return { success: true, message: '✅ Foto opgedateer' };
             }
 
             getUserStats() {
@@ -993,6 +1177,12 @@
             getDisplayName() {
                 if (!this.currentUser || !this.currentUserData) return null;
                 return this.useSupabase ? (this.currentUserData.display_name || this.currentUser) : (this.currentUserData.displayName || this.currentUser);
+            }
+
+            getProfileImage() {
+                if (!this.currentUser || !this.currentUserData) return DEFAULT_AVATAR;
+                const img = this.useSupabase ? this.currentUserData.profile_image : this.currentUserData.profileImage;
+                return img || DEFAULT_AVATAR;
             }
 
             async updateUserStats(newStats) {
@@ -1066,7 +1256,7 @@
 
                     const { data, error } = await this.supabase
                         .from('users')
-                        .select('username, display_name, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
+                        .select('username, display_name, profile_image, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
                         .order(dbSortBy, { ascending: false })
                         .limit(limit);
 
@@ -1075,6 +1265,7 @@
                     return data.map(row => ({
                         username: row.username || 'onbekend',
                         displayName: row.display_name || row.username || 'Onbekend',
+                        profileImage: row.profile_image,
                         stats: {
                             totalCorrect: row.total_correct || 0,
                             bestStreak: row.best_streak || 0,
@@ -1098,6 +1289,7 @@
                     const entries = Object.entries(users).map(([key, data]) => ({
                         username: key,
                         displayName: data.displayName || key,
+                        profileImage: data.profileImage,
                         stats: data.stats || this.getDefaultStats(),
                         lastLogin: data.lastLogin,
                     }));
@@ -1114,6 +1306,102 @@
         }
 
         const userSystem = new UserSystem();
+
+        // ================================================================
+        //   PROFIEL FUNCTIES
+        // ================================================================
+        function showProfilePopup() {
+            if (!userSystem.currentUser) return;
+            
+            document.getElementById('profileUsername').value = userSystem.getDisplayName();
+            document.getElementById('profileImagePreview').src = userSystem.getProfileImage();
+            clearError('profileError');
+            document.getElementById('profilePopup').classList.add('show');
+        }
+
+        function hideProfilePopup() {
+            document.getElementById('profilePopup').classList.remove('show');
+        }
+
+        // Profiel foto oplaai
+        document.getElementById('profileImageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                showError('profileError', '❌ Foto moet kleiner as 2MB wees', 'profileBox');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageData = event.target.result;
+                document.getElementById('profileImagePreview').src = imageData;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Stoor profiel
+        document.getElementById('saveProfileBtn').addEventListener('click', async function() {
+            const currentSrc = document.getElementById('profileImagePreview').src;
+            const newImage = currentSrc !== DEFAULT_AVATAR ? currentSrc : null;
+            
+            setLoading('saveProfileBtn', true, ' Stoor Profiel');
+            const result = await userSystem.updateProfileImage(newImage);
+            
+            if (result.success) {
+                clearError('profileError');
+                hideProfilePopup();
+                updateProfileButton();
+                feedbackMsg.className = 'feedback-msg correct';
+                feedbackMsg.textContent = result.message;
+            } else {
+                showError('profileError', result.message, 'profileBox');
+            }
+            setLoading('saveProfileBtn', false, '💾 Stoor Profiel');
+        });
+
+        // Vee rekening uit
+        document.getElementById('deleteAccountBtn').addEventListener('click', async function() {
+            if (!confirm('⚠️ Is jy seker jy wil jou rekening uitvee? Dit kan nie ongedaan gemaak word nie!')) {
+                return;
+            }
+
+            if (!confirm('🚨 Laaste waarskuwing: Alle jou vordering sal verlore gaan!')) {
+                return;
+            }
+
+            setLoading('deleteAccountBtn', true, '🗑️ Vee Uit');
+            const result = await userSystem.deleteAccount();
+            
+            if (result.success) {
+                hideProfilePopup();
+                updateUserUI();
+                restartGame();
+                feedbackMsg.className = 'feedback-msg info';
+                feedbackMsg.textContent = result.message;
+            } else {
+                showError('profileError', result.message, 'profileBox');
+            }
+            setLoading('deleteAccountBtn', false, '🗑️ Vee Rekening Uit');
+        });
+
+        function updateProfileButton() {
+            const container = document.getElementById('profileBtnContainer');
+            const btn = document.getElementById('profileBtn');
+            
+            if (userSystem.currentUser) {
+                container.style.display = 'block';
+                const img = userSystem.getProfileImage();
+                if (img && img !== DEFAULT_AVATAR) {
+                    btn.innerHTML = `<img src="${img}" alt="Profiel">`;
+                } else {
+                    btn.innerHTML = '<div class="default-avatar">👤</div>';
+                }
+            } else {
+                container.style.display = 'none';
+            }
+        }
 
         // ================================================================
         //   POPUP & UI EVENT LISTENERS
@@ -1176,10 +1464,12 @@
                 const value = entry.stats[sortBy] || 0;
                 const lastPlayed = entry.lastLogin ? new Date(entry.lastLogin).toLocaleDateString('af-ZA') : 'Onbekend';
                 const displayName = entry.displayName || entry.username || 'Onbekend';
+                const profileImg = entry.profileImage || DEFAULT_AVATAR;
 
                 html += `
                     <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''}">
                         <div class="leaderboard-rank ${rankClass}">${medal}</div>
+                        <img src="${profileImg}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #3b82f6;" alt="Profiel">
                         <div class="leaderboard-info">
                             <div class="leaderboard-name">${displayName} ${isCurrentUser ? '(Jy)' : ''}</div>
                             <div class="leaderboard-meta">Laas gespeel: ${lastPlayed}</div>
@@ -1195,7 +1485,7 @@
         function renderHistory() {
             const list = document.getElementById('historyList');
             if (answerHistory.length === 0) {
-                list.innerHTML = '<div class="leaderboard-empty">🎮 Nog geen antwoorde in hierdie speletjie nie.</div>';
+                list.innerHTML = '<div class="leaderboard-empty"> Nog geen antwoorde in hierdie speletjie nie.</div>';
                 return;
             }
             let html = '';
@@ -1235,6 +1525,7 @@
                 logoutBtn.style.display = 'inline-block';
                 userStatsDisplay.style.display = 'flex';
                 app.classList.remove('disabled');
+                updateProfileButton();
 
                 document.getElementById('userTotalCorrect').textContent = stats?.totalCorrect || 0;
                 document.getElementById('userBestStreak').textContent = stats?.bestStreak || 0;
@@ -1247,12 +1538,14 @@
                 logoutBtn.style.display = 'none';
                 userStatsDisplay.style.display = 'none';
                 app.classList.add('disabled');
+                document.getElementById('profileBtnContainer').style.display = 'none';
             }
         }
 
         document.getElementById('showLoginBtn').addEventListener('click', showLoginPopup);
         document.getElementById('showRegisterBtn').addEventListener('click', showRegisterPopup);
         document.getElementById('showLeaderboardBtn').addEventListener('click', showLeaderboardPopup);
+        document.getElementById('profileBtn').addEventListener('click', showProfilePopup);
         document.getElementById('closeLoginPopup').addEventListener('click', hideLoginPopup);
         document.getElementById('loginCancelBtn').addEventListener('click', hideLoginPopup);
         document.getElementById('closeRegisterPopup').addEventListener('click', hideRegisterPopup);
@@ -1260,6 +1553,7 @@
         document.getElementById('closeLeaderboardPopup').addEventListener('click', hideLeaderboardPopup);
         document.getElementById('closeHistoryPopup').addEventListener('click', hideHistoryPopup);
         document.getElementById('closeHistoryBtn').addEventListener('click', hideHistoryPopup);
+        document.getElementById('closeProfilePopup').addEventListener('click', hideProfilePopup);
         document.getElementById('historyBtn').addEventListener('click', showHistoryPopup);
 
         document.getElementById('switchToRegister').addEventListener('click', () => { hideLoginPopup(); setTimeout(showRegisterPopup, 200); });
@@ -1293,7 +1587,6 @@
                 hideLoginPopup();
                 updateUserUI();
                 loadUserStatsIntoGame();
-                // HERVAT die speletjie in plaas van om van voor af te begin
                 if (typeof resumeGame === 'function') resumeGame();
                 feedbackMsg.className = 'feedback-msg correct';
                 feedbackMsg.textContent = result.message;
@@ -1355,7 +1648,6 @@
         document.getElementById('logoutBtn').addEventListener('click', () => {
             userSystem.logout();
             updateUserUI();
-            // Begin 'n vars speletjie vir die volgende gebruiker
             if (typeof restartGame === 'function') restartGame();
             feedbackMsg.className = 'feedback-msg info';
             feedbackMsg.textContent = '👋 Jy is uitgeteken!';
@@ -1383,19 +1675,18 @@
             { display: "NO₂⁻", answer: "NO2(-1)", name: "nitrietioon" },
             { display: "MnO₄⁻", answer: "MnO4(-1)", name: "permanganaatioon" },
             { display: "ClO₃⁻", answer: "ClO3(-1)", name: "chloraatioon" },
-            { display: "CH₃COO⁻", answer: "CH3COO(-1)", name: "asetaatioon" },
+            { display: "CH₃COO", answer: "CH3COO(-1)", name: "asetaatioon" },
             { display: "HCO₃⁻", answer: "HCO3(-1)", name: "waterstofkarbonaatioon" },
             { display: "HSO₃⁻", answer: "HSO3(-1)", name: "waterstofsulfietioon" },
             { display: "HSO₄⁻", answer: "HSO4(-1)", name: "waterstofsulfaatioon" },
             { display: "SO₄²⁻", answer: "SO4(-2)", name: "sulfaatioon" },
             { display: "MnO₄²⁻", answer: "MnO4(-2)", name: "manganaatioon" },
-            { display: "SO₃²⁻", answer: "SO3(-2)", name: "sulfietioon" },
-            { display: "CO₃²⁻", answer: "CO3(-2)", name: "karbonaatioon" },
+            { display: "SO²⁻", answer: "SO3(-2)", name: "sulfietioon" },
+            { display: "CO₃²", answer: "CO3(-2)", name: "karbonaatioon" },
             { display: "CrO₄²⁻", answer: "CrO4(-2)", name: "chromaatioon" },
             { display: "Cr₂O₇²⁻", answer: "Cr2O7(-2)", name: "dichromaatioon" },
-            { display: "O₂²⁻", answer: "O2(-2)", name: "peroksiedioon" },
             { display: "PO₄³⁻", answer: "PO4(-3)", name: "fosfaatioon" },
-            { display: "NH₄⁺", answer: "NH4(+1)", name: "ammoniumioon" },
+            { display: "NH⁺", answer: "NH4(+1)", name: "ammoniumioon" },
             { display: "H₃O⁺", answer: "H3O(+1)", name: "hidroniumioon" },
             { display: "H₂O", answer: "H2O", name: "water" },
             { display: "NH₃", answer: "NH3", name: "ammoniak" },
@@ -1443,6 +1734,18 @@
         let heartParticles = [], blockParticles = [];
         let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
         let answerHistory = [];
+        let profileImageObj = null;
+
+        // Laai profiel foto
+        function loadProfileImage() {
+            if (userSystem.currentUser) {
+                const imgSrc = userSystem.getProfileImage();
+                profileImageObj = new Image();
+                profileImageObj.src = imgSrc;
+            } else {
+                profileImageObj = null;
+            }
+        }
 
         // ================================================================
         //   GAME LOGIC & AUTO-SAVE (USER SPECIFIC)
@@ -1461,7 +1764,7 @@
                 lavaLevel: lavaLevel,
                 currentQ: currentQ,
                 currentCorrect: currentCorrect,
-                answerHistory: answerHistory, // Stoor ook die geskiedenis
+                answerHistory: answerHistory,
                 timestamp: Date.now()
             };
             localStorage.setItem(getSaveKey(), JSON.stringify(gameState));
@@ -1528,13 +1831,13 @@
 
         function initGame(resetLava = true, forceNew = false) {
             const saveKey = getSaveKey();
+            loadProfileImage();
             
             if (!forceNew) {
                 const saved = localStorage.getItem(saveKey);
                 if (saved) {
                     try {
                         const state = JSON.parse(saved);
-                        // Herlaai slegs as dit minder as 24 uur oud is
                         if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
                             stack = state.stack || [];
                             score = state.score || 0;
@@ -1544,14 +1847,14 @@
                             lavaLevel = state.lavaLevel !== undefined ? state.lavaLevel : GROUND_Y;
                             currentQ = state.currentQ || null;
                             currentCorrect = state.currentCorrect || '';
-                            answerHistory = state.answerHistory || []; // Herlaai geskiedenis
+                            answerHistory = state.answerHistory || [];
                             
                             if (isLavaMode) {
                                 lavaBtn.textContent = '🌋 Lava: AAN';
                                 lavaBtn.classList.add('active');
                                 lavaStatus.style.display = 'inline';
                             } else {
-                                lavaBtn.textContent = '🌋 Lava Mode';
+                                lavaBtn.textContent = ' Lava Mode';
                                 lavaBtn.classList.remove('active');
                                 lavaStatus.style.display = 'none';
                             }
@@ -1574,7 +1877,7 @@
                             answerInput.value = '';
                             answerInput.focus();
                             feedbackMsg.className = 'feedback-msg info';
-                            feedbackMsg.textContent = isLavaMode ? '🌋 LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
+                            feedbackMsg.textContent = isLavaMode ? ' LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
                             return;
                         }
                     } catch (e) {
@@ -1583,8 +1886,7 @@
                 }
             }
             
-            // As ons hier kom, begin ons 'n nuwe speletjie
-            answerHistory = []; // Reset geskiedenis vir nuwe speletjie
+            answerHistory = [];
             const colors = getColorPalette();
             stack = [];
             for (let i = 0; i < START_BLOCKS; i++) stack.push(colors[i % colors.length]);
@@ -1629,7 +1931,7 @@
             answerInput.value = '';
             answerInput.focus();
             feedbackMsg.className = 'feedback-msg info';
-            feedbackMsg.textContent = isLavaMode ? '🌋 LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
+            feedbackMsg.textContent = isLavaMode ? ' LAVA MODE! 3 harte • Antwoord vinnig!' : '💡 3 harte • Tik jou antwoord en druk Enter';
         }
 
         function generateQuestion() {
@@ -1650,7 +1952,7 @@
             answerInput.disabled = false;
             answerInput.focus();
             feedbackMsg.className = 'feedback-msg info';
-            feedbackMsg.textContent = isLavaMode ? `🌋 Vinnig! ❤️ × ${lives}` : `💡 Tik jou antwoord... ❤️ × ${lives}`;
+            feedbackMsg.textContent = isLavaMode ? ` Vinnig! ❤️ × ${lives}` : `💡 Tik jou antwoord... ❤️ × ${lives}`;
         }
 
         function updateStats() {
@@ -1712,7 +2014,6 @@
             const correct = currentCorrect.toLowerCase();
             const ok = (userAns === correct);
 
-            // Stoor antwoord in geskiedenis
             answerHistory.unshift({
                 question: currentQ.display,
                 userAnswer: raw,
@@ -1807,7 +2108,7 @@
                                 isGameOver = true; charFalling = true; fallVelocity = 0; fallRotation = 0;
                                 answerInput.disabled = true; submitBtn.disabled = true;
                                 updateBestHeight();
-                                clearCurrentGame(); // Veë die gestoorde speletjie uit
+                                clearCurrentGame();
                                 finalScore.textContent = score;
                                 finalBlocks.textContent = stack.length;
                                 finalStreak.textContent = bestStreak;
@@ -1860,7 +2161,7 @@
                     streak = 0;
                     triggerHeartLoss(lives, canvas.width - 16 - (lives) * 28, 22);
                     feedbackMsg.className = 'feedback-msg heart-loss';
-                    feedbackMsg.textContent = `🌋 Lava het jou gebrand! ❤️ × ${lives}`;
+                    feedbackMsg.textContent = ` Lava het jou gebrand! ❤️ × ${lives}`;
                     updateStats();
                     saveCurrentGame();
                     if (lives === 0) {
@@ -1871,7 +2172,7 @@
                         setTimeout(() => {
                             finalScore.textContent = score; finalBlocks.textContent = stack.length;
                             finalStreak.textContent = bestStreak; finalBestHeight.textContent = bestHeight;
-                            gameOverTitle.textContent = '🌋 Verbrand!';
+                            gameOverTitle.textContent = ' Verbrand!';
                             gameOverSub.textContent = 'Die lawa het jou ingehaal!';
                             gameOverOverlay.classList.add('show');
                             submitBtn.disabled = false;
@@ -1887,7 +2188,7 @@
                     setTimeout(() => {
                         finalScore.textContent = score; finalBlocks.textContent = stack.length;
                         finalStreak.textContent = bestStreak; finalBestHeight.textContent = bestHeight;
-                        gameOverTitle.textContent = '🌋 Verbrand!';
+                        gameOverTitle.textContent = ' Verbrand!';
                         gameOverSub.textContent = 'Die lawa het jou ingehaal!';
                         gameOverOverlay.classList.add('show');
                         submitBtn.disabled = false;
@@ -2176,7 +2477,7 @@
                 const dist = Math.max(0, Math.round((lavaLevel - getStackTopY()) / BLOCK_H));
                 ctx.fillStyle = dist < 4 ? '#f87171' : '#fb923c';
                 ctx.font = 'bold 13px "Segoe UI",sans-serif';
-                ctx.fillText(`🌋 ${dist} blokke`, 16, 72);
+                ctx.fillText(` ${dist} blokke`, 16, 72);
             }
 
             const screenStackH = stack.length * BLOCK_H;
@@ -2190,7 +2491,7 @@
                 ctx.fillText(`${stack.length}`, W - 20, Math.max(16, barY + 4));
             }
 
-            let statusText = 'Aarde', statusColor = '#4ade80', emoji = '🌍';
+            let statusText = 'Aarde', statusColor = '#4ade80', emoji = '';
             if (lvl >= 20) { statusText = 'Ruimte'; emoji = '🌙'; statusColor = '#a78bfa'; }
             else if (lvl >= 16) { statusText = 'Hoog in die lug'; emoji = '☁️'; statusColor = '#60a5fa'; }
             else if (lvl >= 11) { statusText = 'Bo die wolke'; emoji = '☁️'; statusColor = '#fbbf24'; }
@@ -2534,8 +2835,21 @@
             ctx.restore();
 
             ctx.shadowBlur = 10;
-            ctx.fillStyle = skinColor;
-            ctx.beginPath(); ctx.arc(0, -26 * s, 16 * s, 0, Math.PI * 2); ctx.fill();
+            
+            // Teken profiel foto op die karakter se kop
+            if (profileImageObj && profileImageObj.complete) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(0, -26 * s, 16 * s, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                ctx.drawImage(profileImageObj, -16 * s, -42 * s, 32 * s, 32 * s);
+                ctx.restore();
+            } else {
+                // Default avatar
+                ctx.fillStyle = skinColor;
+                ctx.beginPath(); ctx.arc(0, -26 * s, 16 * s, 0, Math.PI * 2); ctx.fill();
+            }
 
             ctx.fillStyle = '#4a3728';
             ctx.beginPath(); ctx.ellipse(0, -34 * s, 16 * s, 8 * s, 0, Math.PI, 0); ctx.fill();
@@ -2661,11 +2975,10 @@
             answerInput.focus();
         }
 
-        // Nuwe funksie om speletjie te hervat sonder om dit te reset
         function resumeGame() {
             if (animFrame) cancelAnimationFrame(animFrame);
             loadBestHeight();
-            initGame(false, false); // forceNew = false, laat dit laai uit localStorage
+            initGame(false, false);
             gameLoop();
             answerInput.focus();
         }
@@ -2673,7 +2986,7 @@
         function restartGame() {
             if (animFrame) cancelAnimationFrame(animFrame);
             loadBestHeight();
-            clearCurrentGame(); // Veë die ou gestoorde speletjie uit
+            clearCurrentGame();
             initGame(true, true);
             gameLoop();
             answerInput.focus();
@@ -2684,7 +2997,7 @@
             gameOverOverlay.classList.remove('show');
             if (isLavaMode) {
                 isLavaMode = false;
-                lavaBtn.textContent = '🌋 Lava Mode';
+                lavaBtn.textContent = ' Lava Mode';
                 lavaBtn.classList.remove('active');
                 lavaStatus.style.display = 'none';
             }
@@ -2728,7 +3041,6 @@
                         userSystem.currentUserData = user;
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        // HERVAT die speletjie in plaas van restartGame()
                         setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
                         return true;
                     } else {
@@ -2741,7 +3053,6 @@
                         userSystem.currentUserData = users[savedUser];
                         updateUserUI();
                         loadUserStatsIntoGame();
-                        // HERVAT die speletjie in plaas van restartGame()
                         setTimeout(() => { if (typeof resumeGame === 'function') resumeGame(); }, 100);
                         return true;
                     } else {
