@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🧱 Blok Stapel • Chemie • Harte</title>
+    <title>🧱 Blok Stapel • Chemie • Harte</a>
     
     <!-- 1. SUPABASE CLIENT LIBRARY -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -243,19 +243,52 @@
 
     <script>
         // ================================================================
-        //   1. SUPABASE SETUP
+        //   1. SAFE SUPABASE SETUP (Met LocalStorage Fallback)
         // ================================================================
         const SUPABASE_URL = 'https://akbsemgalxsfmpnbfzbm.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_y0RhIwDsXUCK46Xrf9t7xw_9EXUh3Db';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        let supabase = null;
+        if (typeof window.supabase !== 'undefined') {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase client initialized successfully.");
+            } catch (e) {
+                console.error("❌ Failed to initialize Supabase client:", e);
+            }
+        } else {
+            console.warn("⚠️ Supabase library not loaded. The game will run in offline/local mode.");
+        }
 
         // ================================================================
-        //   2. GEBRUIKER STELSEL (Met Supabase + Cache vir spoed)
+        //   2. GEBRUIKER STELSEL (Met Robuuste Fallback)
         // ================================================================
         class UserSystem {
             constructor() {
                 this.currentUser = null;
-                this.cachedStats = null; // Hou stats in geheue vir vinnige spel
+                this.cachedStats = null;
+                this.useLocalStorage = !supabase; // Val terug op localStorage as Supabase faal
+                this.storageKey = 'chemieUsers_v2';
+                if (this.useLocalStorage) {
+                    this.users = this.loadAllUsers();
+                }
+            }
+
+            loadAllUsers() {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    return data ? JSON.parse(data) : {};
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            saveAllUsers() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.users));
+                } catch (e) {
+                    console.error('Failed to save to localStorage:', e);
+                }
             }
 
             hashPassword(password) {
@@ -281,6 +314,17 @@
                 if (password.length < 4) return { success: false, message: '❌ Wagwoord moet minstens 4 karakters wees!' };
                 if (password !== confirmPassword) return { success: false, message: '❌ Wagwoorde stem nie ooreen nie!' };
 
+                if (this.useLocalStorage) {
+                    if (this.users[username]) return { success: false, message: '❌ Gebruikersnaam bestaan reeds!' };
+                    this.users[username] = {
+                        password_hash: this.hashPassword(password),
+                        stats: this.getDefaultStats(),
+                        last_login: new Date().toISOString()
+                    };
+                    this.saveAllUsers();
+                    return { success: true, message: '✅ Registrasie suksesvol! Teken nou in.' };
+                }
+
                 try {
                     const { data: existing } = await supabase.from('users').select('username').eq('username', username).single();
                     if (existing) return { success: false, message: '❌ Gebruikersnaam bestaan reeds!' };
@@ -295,11 +339,24 @@
                     return { success: true, message: '✅ Registrasie suksesvol! Teken nou in.' };
                 } catch (e) {
                     console.error('Register error:', e);
-                    return { success: false, message: '❌ Kon nie registreer nie.' };
+                    return { success: false, message: '❌ Kon nie registreer nie. (Netwerk of tabel fout)' };
                 }
             }
 
             async login(username, password) {
+                if (this.useLocalStorage) {
+                    const user = this.users[username];
+                    if (!user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
+                    if (this.hashPassword(password) !== user.password_hash) return { success: false, message: '❌ Verkeerde wagwoord!' };
+                    
+                    user.last_login = new Date().toISOString();
+                    this.saveAllUsers();
+                    this.currentUser = username;
+                    this.cachedStats = user.stats || this.getDefaultStats();
+                    sessionStorage.setItem('chemieUser', username);
+                    return { success: true, message: `✅ Welkom terug, ${username}!` };
+                }
+
                 try {
                     const { data: user, error } = await supabase.from('users').select('*').eq('username', username).single();
                     if (error || !user) return { success: false, message: '❌ Gebruikersnaam bestaan nie!' };
@@ -313,7 +370,7 @@
                     return { success: true, message: `✅ Welkom terug, ${username}!` };
                 } catch (e) {
                     console.error('Login error:', e);
-                    return { success: false, message: '❌ Kon nie inteken nie.' };
+                    return { success: false, message: '❌ Kon nie inteken nie. (Netwerk fout)' };
                 }
             }
 
@@ -326,8 +383,14 @@
 
             async getUserStats() {
                 if (!this.currentUser) return null;
-                if (this.cachedStats) return this.cachedStats; // Gebruik cache vir vinnige laai
+                if (this.cachedStats) return this.cachedStats; 
                 
+                if (this.useLocalStorage) {
+                    const user = this.users[this.currentUser];
+                    this.cachedStats = user ? user.stats : this.getDefaultStats();
+                    return this.cachedStats;
+                }
+
                 try {
                     const { data: user } = await supabase.from('users').select('stats').eq('username', this.currentUser).single();
                     this.cachedStats = user ? user.stats : this.getDefaultStats();
@@ -339,8 +402,16 @@
 
             async updateUserStats(newStats) {
                 if (!this.currentUser) return false;
-                // Werk eers die cache op sodat die spel nie wag nie
                 this.cachedStats = { ...this.cachedStats, ...newStats };
+                
+                if (this.useLocalStorage) {
+                    if (this.users[this.currentUser]) {
+                        this.users[this.currentUser].stats = this.cachedStats;
+                        this.saveAllUsers();
+                    }
+                    return true;
+                }
+
                 try {
                     await supabase.from('users').update({ stats: this.cachedStats }).eq('username', this.currentUser);
                     return true;
@@ -353,6 +424,15 @@
             async resetUserStats() {
                 if (!this.currentUser) return { success: false, message: '❌ Geen gebruiker ingeteken nie!' };
                 this.cachedStats = this.getDefaultStats();
+                
+                if (this.useLocalStorage) {
+                    if (this.users[this.currentUser]) {
+                        this.users[this.currentUser].stats = this.cachedStats;
+                        this.saveAllUsers();
+                    }
+                    return { success: true, message: '✅ Statistieke is teruggestel!' };
+                }
+
                 try {
                     await supabase.from('users').update({ stats: this.cachedStats }).eq('username', this.currentUser);
                     return { success: true, message: '✅ Statistieke is teruggestel!' };
@@ -427,7 +507,6 @@
             if (typeof window.updateBestHeightFromUser === 'function') {
                 window.updateBestHeightFromUser(stats.bestHeight || 3);
             }
-            // Hierdie ID's pas nou by die HTML
             document.getElementById('userTotalCorrect').textContent = stats.totalCorrect || 0;
             document.getElementById('userBestStreak').textContent = stats.bestStreak || 0;
             document.getElementById('userTotalBlocks').textContent = stats.totalBlocksStacked || 0;
@@ -534,7 +613,7 @@
         });
 
         // ================================================================
-        //   5. SPEELTJIE LOGIKA (Presies soos jou oorspronklike kode)
+        //   5. SPEELTJIE LOGIKA
         // ================================================================
         const CHEM_BANK = [
             { display: "OH⁻", answer: "OH(-1)", name: "hidroksiedioon" },
@@ -1199,13 +1278,27 @@
         async function checkSession() {
             const savedUser = sessionStorage.getItem('chemieUser');
             if (savedUser) {
-                const { data: user } = await supabase.from('users').select('username').eq('username', savedUser).single();
-                if (user) {
-                    userSystem.currentUser = savedUser;
-                    await updateUserUI();
-                    await loadUserStatsIntoGame();
-                    setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
-                    return true;
+                if (userSystem.useLocalStorage) {
+                    if (userSystem.users[savedUser]) {
+                        userSystem.currentUser = savedUser;
+                        await updateUserUI();
+                        await loadUserStatsIntoGame();
+                        setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
+                        return true;
+                    }
+                } else if (supabase) {
+                    try {
+                        const { data: user } = await supabase.from('users').select('username').eq('username', savedUser).single();
+                        if (user) {
+                            userSystem.currentUser = savedUser;
+                            await updateUserUI();
+                            await loadUserStatsIntoGame();
+                            setTimeout(() => { if (typeof restartGame === 'function') restartGame(); }, 100);
+                            return true;
+                        }
+                    } catch (e) {
+                        console.error("Session check failed:", e);
+                    }
                 }
             }
             return false;
@@ -1227,7 +1320,7 @@
         setTimeout(() => { checkSession(); }, 200);
 
         console.log('🧱 Blok Stapel Chemie • ❤️ 3 harte met animasie!');
-        console.log('👤 Gebruiker stelsel is aktief met Supabase!');
+        console.log('👤 Gebruiker stelsel is aktief (met fallback ondersteuning)!');
         window.userSystem = userSystem;
     </script>
 </body>
