@@ -644,6 +644,7 @@
                     <button class="leaderboard-tab active" data-sort="bestHeight">🏔️ Hoogte</button>
                     <button class="leaderboard-tab" data-sort="totalCorrect">✅ Korrek</button>
                     <button class="leaderboard-tab" data-sort="bestStreak">🔥 Reeks</button>
+                    <button class="leaderboard-tab" data-sort="bestLavaHeight">🌋 Lava</button>
                     <button class="leaderboard-tab" data-sort="gamesPlayed">🎮 Speletjies</button>
                 </div>
                 <div class="leaderboard-list" id="leaderboardList"></div>
@@ -696,6 +697,39 @@
     </div>
 
     <script>
+        /*
+         * =====================================================================
+         * SUPABASE OPSTEL INSTRUKSIES:
+         * 1. Skep 'n nuwe projek op https://supabase.com
+         * 2. Gaan na die "SQL Editor" en voer die volgende query uit:
+         * 
+         * CREATE TABLE users (
+         *     username TEXT PRIMARY KEY,
+         *     display_name TEXT,
+         *     password_hash TEXT,
+         *     total_correct INT DEFAULT 0,
+         *     total_wrong INT DEFAULT 0,
+         *     best_streak INT DEFAULT 0,
+         *     best_height INT DEFAULT 3,
+         *     best_lava_height INT DEFAULT 0,
+         *     games_played INT DEFAULT 0,
+         *     lava_mode_used INT DEFAULT 0,
+         *     total_blocks_stacked INT DEFAULT 0,
+         *     last_played TIMESTAMPTZ DEFAULT NOW(),
+         *     created_at TIMESTAMPTZ DEFAULT NOW(),
+         *     last_login TIMESTAMPTZ DEFAULT NOW()
+         * );
+         * 
+         * 3. Stel Row Level Security (RLS) policies in vir openbare toegang:
+         *    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+         *    CREATE POLICY "Allow public read" ON users FOR SELECT USING (true);
+         *    CREATE POLICY "Allow public insert" ON users FOR INSERT WITH CHECK (true);
+         *    CREATE POLICY "Allow public update" ON users FOR UPDATE USING (true);
+         * 
+         * 4. Vervang 'YOUR_SUPABASE_URL' en 'YOUR_SUPABASE_ANON_KEY' hieronder.
+         * =====================================================================
+         */
+
         // ================================================================
         //   HULP-FUNKSIES VIR UI
         // ================================================================
@@ -752,7 +786,6 @@
                 this.supabase = null;
                 this.storageKey = 'chemieUsers_v5';
 
-                // Vervang hierdie met jou eie Supabase besonderhede
                 const supabaseUrl = 'YOUR_SUPABASE_URL'; 
                 const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; 
 
@@ -818,6 +851,7 @@
                             total_wrong: stats.totalWrong,
                             best_streak: stats.bestStreak,
                             best_height: stats.bestHeight,
+                            best_lava_height: stats.bestLavaHeight,
                             games_played: stats.gamesPlayed,
                             lava_mode_used: stats.lavaModeUsed,
                             total_blocks_stacked: stats.totalBlocksStacked,
@@ -905,6 +939,7 @@
                         totalWrong: this.currentUserData.total_wrong || 0,
                         bestStreak: this.currentUserData.best_streak || 0,
                         bestHeight: this.currentUserData.best_height || 3,
+                        bestLavaHeight: this.currentUserData.best_lava_height || 0,
                         gamesPlayed: this.currentUserData.games_played || 0,
                         lavaModeUsed: this.currentUserData.lava_mode_used || 0,
                         totalBlocksStacked: this.currentUserData.total_blocks_stacked || 0,
@@ -929,6 +964,7 @@
                         total_wrong: newStats.totalWrong,
                         best_streak: newStats.bestStreak,
                         best_height: newStats.bestHeight,
+                        best_lava_height: newStats.bestLavaHeight,
                         games_played: newStats.gamesPlayed,
                         lava_mode_used: newStats.lavaModeUsed,
                         total_blocks_stacked: newStats.totalBlocksStacked,
@@ -959,6 +995,7 @@
                     totalWrong: 0,
                     bestStreak: 0,
                     bestHeight: 3,
+                    bestLavaHeight: 0,
                     gamesPlayed: 0,
                     lavaModeUsed: 0,
                     totalBlocksStacked: 0,
@@ -982,13 +1019,14 @@
                         'bestHeight': 'best_height',
                         'totalCorrect': 'total_correct',
                         'bestStreak': 'best_streak',
+                        'bestLavaHeight': 'best_lava_height',
                         'gamesPlayed': 'games_played'
                     };
                     const dbSortBy = sortMap[sortBy] || 'best_height';
 
                     const { data, error } = await this.supabase
                         .from('users')
-                        .select('username, display_name, total_correct, best_streak, best_height, games_played, last_login')
+                        .select('username, display_name, total_correct, best_streak, best_height, best_lava_height, games_played, last_login')
                         .order(dbSortBy, { ascending: false })
                         .limit(limit);
 
@@ -1001,6 +1039,7 @@
                             totalCorrect: row.total_correct || 0,
                             bestStreak: row.best_streak || 0,
                             bestHeight: row.best_height || 3,
+                            bestLavaHeight: row.best_lava_height || 0,
                             gamesPlayed: row.games_played || 0
                         },
                         lastLogin: row.last_login
@@ -1011,6 +1050,7 @@
                         'bestHeight': 'bestHeight',
                         'totalCorrect': 'totalCorrect',
                         'bestStreak': 'bestStreak',
+                        'bestLavaHeight': 'bestLavaHeight',
                         'gamesPlayed': 'gamesPlayed'
                     };
                     const fallbackSortBy = sortMap[sortBy] || 'bestHeight';
@@ -1377,6 +1417,17 @@
             bestHeightDisplay.textContent = bestHeight;
         }
 
+        function updateLavaBestHeight() {
+            if (!isLavaMode || !userSystem.currentUser) return;
+            const current = stack.length;
+            const stats = userSystem.getUserStats();
+            if (stats && current > (stats.bestLavaHeight || 0)) {
+                stats.bestLavaHeight = current;
+                userSystem.updateUserStats(stats);
+                updateUserUI();
+            }
+        }
+
         window.updateBestHeightFromUser = function(height) {
             if (height > bestHeight) {
                 bestHeight = height;
@@ -1515,6 +1566,7 @@
             streakDisplay.textContent = streak;
             heightDisplay.textContent = stack.length;
             updateBestHeight();
+            updateLavaBestHeight();
 
             if (isLavaMode) {
                 lavaStatus.style.display = 'inline';
