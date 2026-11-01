@@ -615,6 +615,25 @@ body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #0b1220; }
 ::-webkit-scrollbar-thumb { background: #334155; border-radius: 12px; }
+
+/* --- KLANKBEHEER --- */
+.audio-controls {
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap;
+  gap: 10px; padding: 10px 14px; margin-bottom: 12px;
+  background: #0f172a; border: 1px solid #263449; border-radius: 14px;
+}
+.audio-controls button {
+  border: 1px solid #334155; border-radius: 24px; padding: 8px 14px;
+  background: #1e293b; color: #e2e8f0; font-weight: 600; cursor: pointer;
+}
+.audio-controls button:hover { background: #26364e; }
+.audio-controls label { color: #94a3b8; font-size: .85rem; display:flex; align-items:center; gap:8px; }
+.audio-controls input[type="range"] { width: 105px; accent-color: #3b82f6; cursor:pointer; }
+@media (max-width: 420px) {
+  .audio-controls { justify-content: center; }
+  .audio-controls label { width: 100%; justify-content: center; }
+}
+
 </style>
 </head>
 <body>
@@ -769,6 +788,12 @@ body {
     </div>
   </div>
 
+  <!-- KLANKBEHEER -->
+  <div class="audio-controls" aria-label="Klankbeheer">
+    <button type="button" id="audioToggleBtn" aria-pressed="false">🔈 Aktiveer klank</button>
+    <label for="audioVolume">🔊 Volume <input type="range" id="audioVolume" min="0" max="100" value="35"></label>
+  </div>
+
   <!-- GAME -->
   <div class="game-wrapper" id="app">
     <div class="canvas-wrap" id="canvasWrap">
@@ -817,6 +842,118 @@ body {
 </div>
 
 <script>
+// ================================================================
+//   KLANKSTELSEL (Web Audio API - geen eksterne klanklêers nodig)
+// ================================================================
+const GameAudio = (() => {
+  let audioContext = null;
+  let masterGain = null;
+  let musicGain = null;
+  let musicTimer = null;
+  let musicStep = 0;
+  let enabled = false;
+  let volume = Number(localStorage.getItem('blokStapelVolume') || 35) / 100;
+  const toggleButton = document.getElementById('audioToggleBtn');
+  const volumeSlider = document.getElementById('audioVolume');
+  const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880.00, 698.46,
+                  523.25, 659.25, 783.99, 1046.50, 880.00, 783.99, 659.25, 587.33];
+
+  function init() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return false;
+      audioContext = new AudioCtx();
+      masterGain = audioContext.createGain();
+      musicGain = audioContext.createGain();
+      musicGain.gain.value = 0.22;
+      musicGain.connect(masterGain);
+      masterGain.connect(audioContext.destination);
+      applyVolume();
+    }
+    if (audioContext.state === 'suspended') audioContext.resume();
+    return true;
+  }
+  function applyVolume() {
+    if (masterGain && audioContext) masterGain.gain.setTargetAtTime(enabled ? volume : 0, audioContext.currentTime, 0.04);
+  }
+  function tone(freq, duration=0.12, type='sine', gain=0.22, when=0, endFreq=null) {
+    if (!enabled || !init()) return;
+    const now = audioContext.currentTime + when;
+    const osc = audioContext.createOscillator();
+    const amp = audioContext.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(Math.max(1, freq), now);
+    if (endFreq) osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), now + duration);
+    amp.gain.setValueAtTime(0.0001, now);
+    amp.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), now + 0.015);
+    amp.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(amp); amp.connect(masterGain);
+    osc.start(now); osc.stop(now + duration + 0.025);
+  }
+  function startMusic() {
+    if (!enabled || musicTimer) return;
+    musicStep = 0;
+    musicTimer = setInterval(() => {
+      if (!enabled || !audioContext || audioContext.state !== 'running') return;
+      const f = melody[musicStep % melody.length];
+      const now = audioContext.currentTime;
+      const osc = audioContext.createOscillator();
+      const amp = audioContext.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, now);
+      amp.gain.setValueAtTime(0.0001, now);
+      amp.gain.linearRampToValueAtTime(0.075, now + 0.04);
+      amp.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+      osc.connect(amp); amp.connect(musicGain);
+      osc.start(now); osc.stop(now + 0.45);
+      if (musicStep % 4 === 0) {
+        const bass = audioContext.createOscillator();
+        const bassGain = audioContext.createGain();
+        bass.type = 'sine'; bass.frequency.value = f / 2;
+        bassGain.gain.setValueAtTime(0.0001, now);
+        bassGain.gain.linearRampToValueAtTime(0.035, now + 0.05);
+        bassGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+        bass.connect(bassGain); bassGain.connect(musicGain);
+        bass.start(now); bass.stop(now + 0.58);
+      }
+      musicStep++;
+    }, 440);
+  }
+  function stopMusic() { if (musicTimer) clearInterval(musicTimer); musicTimer = null; }
+  function setEnabled(value) {
+    if (value && !init()) {
+      toggleButton.textContent = '🔇 Klank nie beskikbaar';
+      return;
+    }
+    enabled = value;
+    applyVolume();
+    toggleButton.textContent = enabled ? '🔊 Klank: AAN' : '🔇 Klank: AF';
+    toggleButton.setAttribute('aria-pressed', String(enabled));
+    if (enabled) { startMusic(); tone(660, 0.09, 'sine', 0.1); }
+    else stopMusic();
+  }
+  function setVolume(value) {
+    volume = Math.max(0, Math.min(1, Number(value) / 100));
+    localStorage.setItem('blokStapelVolume', String(Math.round(volume * 100)));
+    applyVolume();
+  }
+  function correct() { tone(660, .12, 'sine', .18); tone(880, .18, 'sine', .16, .10); tone(1046.5, .22, 'sine', .13, .22); }
+  function wrong() { tone(220, .22, 'sawtooth', .12, 0, 110); tone(155, .24, 'triangle', .12, .12, 90); }
+  function block() { tone(420, .07, 'square', .07, 0, 620); tone(760, .09, 'triangle', .08, .045); }
+  function heartLoss() { tone(520, .12, 'sawtooth', .13, 0, 260); tone(180, .28, 'triangle', .16, .10, 75); }
+  function lavaWarning() { tone(130, .18, 'sawtooth', .10); tone(100, .18, 'sawtooth', .09, .22); }
+  function lavaHit() { tone(95, .55, 'sawtooth', .2, 0, 35); tone(65, .5, 'triangle', .15, .08, 30); }
+  function gameOver() { stopMusic(); tone(440, .25, 'triangle', .16); tone(349.23, .3, 'triangle', .15, .25); tone(261.63, .65, 'sine', .17, .55); }
+  function startGame() { if (enabled) startMusic(); }
+
+  if (volumeSlider) {
+    volumeSlider.value = Math.round(volume * 100);
+    volumeSlider.addEventListener('input', e => setVolume(e.target.value));
+  }
+  if (toggleButton) toggleButton.addEventListener('click', () => setEnabled(!enabled));
+  return { correct, wrong, block, heartLoss, lavaWarning, lavaHit, gameOver, startGame, setEnabled };
+})();
+
 /*
 * =====================================================================
 * SUPABASE OPSTEL INSTRUKSIES:
@@ -1669,7 +1806,7 @@ let isGameOver = false, isAnswering = false;
 let currentQ = null, currentCorrect = '';
 let charFalling = false, fallVelocity = 0, fallRotation = 0, charScale = 1;
 let newBlockAnim = 0, newBlockColor = '', bounceAnim = 0, cameraOffset = 0, bestHeight = START_BLOCKS;
-let isLavaMode = false, lavaLevel = GROUND_Y, lavaSpeed = 0.05, lavaTime = 0, lavaBubbles = [], lavaWarningActive = false;
+let isLavaMode = false, lavaLevel = GROUND_Y, lavaSpeed = 0.05, lavaTime = 0, lavaBubbles = [], lavaWarningActive = false, lavaWarningWasActive = false;
 let heartLossIndex = -1, heartLossTimer = 0, HEART_LOSS_DURATION = 40;
 let heartParticles = [], blockParticles = [];
 let stars = [], flyingObjects = [], spawnTimer = 0, currentTime = Date.now();
@@ -1918,6 +2055,8 @@ function handleAnswer() {
     isCorrect: ok
   });
   if (ok) {
+    GameAudio.correct();
+    GameAudio.block();
     score++; streak++;
     if (streak > bestStreak) bestStreak = streak;
     feedbackMsg.className = 'feedback-msg correct';
@@ -1960,6 +2099,7 @@ function handleAnswer() {
       draw();
     }, 400);
   } else {
+    GameAudio.wrong();
     if (userSystem.currentUser) {
       const stats = userSystem.getUserStats();
       if (stats) {
@@ -1984,6 +2124,7 @@ function handleAnswer() {
       }, 700);
     } else {
       lives--;
+      GameAudio.heartLoss();
       if (lives >= 0) {
         feedbackMsg.className = 'feedback-msg heart-loss';
         feedbackMsg.textContent = `❌ Foutief! Regte antwoord: ${currentCorrect} • ❤️ × ${lives}`;
@@ -2005,6 +2146,7 @@ function handleAnswer() {
             gameOverTitle.textContent = '💔 Geen harte!';
             gameOverSub.textContent = 'Jy het al jou harte verloor!';
             gameOverOverlay.classList.add('show');
+            GameAudio.gameOver();
             submitBtn.disabled = false;
             draw();
           }, 500);
@@ -2041,6 +2183,7 @@ function updateLava() {
   if (screenLavaY < -50) lavaLevel = cameraOffset - 50;
   const charFeetY = getStackTopY();
   if (lavaLevel <= charFeetY + 4) {
+    GameAudio.lavaHit();
     if (lives > 0) {
       lives--;
       lavaLevel = Math.min(GROUND_Y, lavaLevel + BLOCK_H * 3);
@@ -2061,6 +2204,7 @@ function updateLava() {
           gameOverTitle.textContent = '🔥 Verbrand!';
           gameOverSub.textContent = 'Die lawa het jou ingehaal!';
           gameOverOverlay.classList.add('show');
+          GameAudio.gameOver();
           submitBtn.disabled = false;
         }, 800);
       }
@@ -2077,6 +2221,7 @@ function updateLava() {
         gameOverTitle.textContent = '🔥 Verbrand!';
         gameOverSub.textContent = 'Die lawa het jou ingehaal!';
         gameOverOverlay.classList.add('show');
+        GameAudio.gameOver();
         submitBtn.disabled = false;
       }, 1200);
     }
@@ -2100,6 +2245,8 @@ function updateLava() {
   if (lavaBubbles.length > 40) lavaBubbles.splice(0, lavaBubbles.length - 40);
   const distToChar = (lavaLevel - getStackTopY()) / BLOCK_H;
   lavaWarningActive = (distToChar < 4 && distToChar > 0);
+  if (lavaWarningActive && !lavaWarningWasActive) GameAudio.lavaWarning();
+  lavaWarningWasActive = lavaWarningActive;
   if (lavaWarningActive) {
     feedbackMsg.className = 'feedback-msg lava-warning';
     feedbackMsg.textContent = `🌋 WAARSKUWING! Lava is ${Math.round(distToChar)} blokke weg! ❤️ × ${lives}`;
@@ -2740,6 +2887,7 @@ function gameLoop() {
 }
 function toggleLavaMode() {
   isLavaMode = !isLavaMode;
+  lavaWarningWasActive = false;
   if (isLavaMode) {
     lavaBtn.textContent = '🌋 Lava: AAN';
     lavaBtn.classList.add('active');
@@ -2762,6 +2910,7 @@ function toggleLavaMode() {
   answerInput.focus();
 }
 function resumeGame() {
+  GameAudio.startGame();
   if (animFrame) cancelAnimationFrame(animFrame);
   loadBestHeight();
   initGame(false, false);
@@ -2769,6 +2918,7 @@ function resumeGame() {
   answerInput.focus();
 }
 function restartGame() {
+  GameAudio.startGame();
   if (animFrame) cancelAnimationFrame(animFrame);
   loadBestHeight();
   clearCurrentGame();
@@ -2777,6 +2927,7 @@ function restartGame() {
   answerInput.focus();
 }
 function quitGame() {
+  GameAudio.startGame();
   if (animFrame) cancelAnimationFrame(animFrame);
   gameOverOverlay.classList.remove('show');
   if (isLavaMode) {
